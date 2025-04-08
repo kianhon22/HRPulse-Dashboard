@@ -100,7 +100,7 @@ const data: Feedback[] = [
 export default function FeedbackPage() {
   return (
     <div className="py-8 pr-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-3xl font-bold">Feedback Management</h1>
           {/* <p className="text-muted-foreground">

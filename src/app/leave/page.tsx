@@ -1,20 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
+import { supabase } from "@/lib/supabase"
+import { format } from "date-fns"
 
 // Define the type for our data
 type Leave = {
   id: string
+  user_id: string
   employee_name: string
   leave_type: string
   start_date: string
   end_date: string
   status: "Pending" | "Approved" | "Rejected"
+  reason: string
+  hr_remarks: string | null
+  attachment_url: string | null
   created_at: string
+  users: {
+    name: string
+  } | null
 }
 
 // Define the columns
@@ -30,10 +39,47 @@ const columns: ColumnDef<Leave>[] = [
   {
     accessorKey: "start_date",
     header: "Start Date",
+    cell: ({ row }) => {
+      const date = row.getValue("start_date") as string
+      return format(new Date(date), "MMM dd, yyyy")
+    },
   },
   {
     accessorKey: "end_date",
     header: "End Date",
+    cell: ({ row }) => {
+      const date = row.getValue("end_date") as string
+      return format(new Date(date), "MMM dd, yyyy")
+    },
+  },
+  {
+    accessorKey: "reason",
+    header: "Reason",
+  },
+  {
+    accessorKey: "hr_remarks",
+    header: "HR Remarks",
+    cell: ({ row }) => {
+      const remarks = row.getValue("hr_remarks") as string | null
+      return remarks || "-"
+    },
+  },
+  {
+    accessorKey: "attachment_url",
+    header: "Attachment",
+    cell: ({ row }) => {
+      const url = row.getValue("attachment_url") as string | null
+      return url ? (
+        <a 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          View
+        </a>
+      ) : "-"
+    },
   },
   {
     accessorKey: "status",
@@ -54,37 +100,10 @@ const columns: ColumnDef<Leave>[] = [
   {
     accessorKey: "created_at",
     header: "Created At",
-  },
-]
-
-// Example data
-const data: Leave[] = [
-  {
-    id: "1",
-    employee_name: "John Doe",
-    leave_type: "Annual Leave",
-    start_date: "2024-04-10",
-    end_date: "2024-04-15",
-    status: "Pending",
-    created_at: "2024-04-01T10:00:00Z",
-  },
-  {
-    id: "2",
-    employee_name: "Jane Smith",
-    leave_type: "Sick Leave",
-    start_date: "2024-04-12",
-    end_date: "2024-04-12",
-    status: "Approved",
-    created_at: "2024-04-02T11:00:00Z",
-  },
-  {
-    id: "3",
-    employee_name: "Mike Johnson",
-    leave_type: "Personal Leave",
-    start_date: "2024-04-15",
-    end_date: "2024-04-16",
-    status: "Rejected",
-    created_at: "2024-04-03T12:00:00Z",
+    cell: ({ row }) => {
+      const date = row.getValue("created_at") as string
+      return format(new Date(date), "MMM dd, yyyy HH:mm")
+    },
   },
 ]
 
@@ -102,11 +121,72 @@ const filterableColumns = [
 ]
 
 export default function LeavePage() {
+  const [data, setData] = useState<Leave[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
+
+  const fetchLeaves = async (year: string) => {
+    setLoading(true)
+    
+    try {
+      // Get the start and end of the selected year
+      const startDate = `${year}-01-01`
+      const endDate = `${year}-12-31`
+      
+      // Fetch leaves for the selected year
+      const { data: leavesData, error } = await supabase
+        .from('leaves')
+        .select(`
+          id,
+          user_id,
+          start_date,
+          end_date,
+          leave_type,
+          status,
+          reason,
+          hr_remarks,
+          attachment_url,
+          created_at,
+          users:user_id (
+            name
+          )
+        `)
+        .gte('start_date', startDate)
+        .lte('start_date', endDate)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error('Error fetching leaves:', error)
+        return
+      }
+      
+      // Transform the data to include employee name
+      const transformedData = leavesData.map((leave: any) => ({
+        ...leave,
+        employee_name: leave.users?.name || 'Unknown'
+      }))
+      
+      setData(transformedData)
+    } catch (error) {
+      console.error('Error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchLeaves(selectedYear)
+  }, [selectedYear])
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year)
+  }
+
   return (
     <div className="py-8 pr-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Leave Management</h1>
-        <Button className="cursor-pointer">
+        <Button>
           <Plus className="mr-2 h-4 w-4" />
           New Leave Request
         </Button>
@@ -116,6 +196,7 @@ export default function LeavePage() {
         data={data} 
         filterableColumns={filterableColumns}
         defaultSort={{ id: "created_at", desc: true }}
+        onYearChange={handleYearChange}
       />
     </div>
   )

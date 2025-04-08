@@ -45,6 +45,11 @@ const sidebarItems = [
     icon: MessageSquare,
   },
   {
+    title: "SurveyRespomse",
+    href: "/survey_response",
+    icon: MessageSquare,
+  },
+  {
     title: "Feedback",
     href: "/feedback",
     icon: Star,

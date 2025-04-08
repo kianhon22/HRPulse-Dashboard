@@ -49,7 +49,7 @@ const metrics = [
 export default function ReportsPage() {
   return (
     <div className="py-8 pr-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-3xl font-bold">Reports & Analytics</h1>
           {/* <p className="text-muted-foreground">

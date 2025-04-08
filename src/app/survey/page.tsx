@@ -1,133 +1,229 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus, BarChart3 } from "lucide-react"
+import { Plus, ChevronsUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
+import { supabase } from "@/lib/supabase"
+import { format } from "date-fns"
+import { Badge } from "@/components/ui/badge"
 
-interface SurveyResponse {
+interface Survey {
   id: string
-  employeeName: string
-  surveyType: string
-  submissionDate: string
-  sentiment: "Positive" | "Neutral" | "Negative"
-  response: string
-  category: string
+  title: string
+  description: string
+  start_date: string
+  end_date: string
+  status: "Active" | "Draft" | "Closed"
+  response_count: number
+  created_at: string
 }
 
-const columns: ColumnDef<SurveyResponse>[] = [
+// Define the columns
+const columns: ColumnDef<Survey>[] = [
   {
-    accessorKey: "employeeName",
-    header: "Employee Name",
-  },
-  {
-    accessorKey: "surveyType",
-    header: "Survey Type",
-  },
-  {
-    accessorKey: "submissionDate",
-    header: "Submission Date",
-  },
-  {
-    accessorKey: "sentiment",
-    header: "Sentiment",
-    cell: ({ row }) => {
-      const sentiment = row.getValue("sentiment") as string
+    accessorKey: "title",
+    header: ({ column }) => {
       return (
-        <div
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            sentiment === "Positive"
-              ? "bg-green-100 text-green-800"
-              : sentiment === "Neutral"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-red-100 text-red-800"
-          }`}
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          {sentiment}
-        </div>
+          Title
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
       )
     },
   },
   {
-    accessorKey: "category",
-    header: "Category",
+    accessorKey: "description",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Description
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const description = row.getValue("description") as string
+      return description.length > 50 ? `${description.substring(0, 50)}...` : description
+    },
   },
   {
-    accessorKey: "response",
-    header: "Response",
-    cell: ({ row }) => {
-      const response = row.getValue("response") as string
+    accessorKey: "start_date",
+    header: ({ column }) => {
       return (
-        <div className="max-w-[500px] truncate" title={response}>
-          {response}
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Start Date
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
       )
+    },
+    cell: ({ row }) => {
+      const date = row.getValue("start_date") as string
+      return format(new Date(date), "MMM dd, yyyy")
+    },
+  },
+  {
+    accessorKey: "end_date",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          End Date
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const date = row.getValue("end_date") as string
+      return format(new Date(date), "MMM dd, yyyy")
+    },
+  },
+  {
+    accessorKey: "response_count",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Responses
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string
+      return (
+        <Badge className={
+          status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-100" : 
+          status === "Draft" ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" : 
+          "bg-gray-100 text-gray-800 hover:bg-gray-100"
+        }>
+          {status}
+        </Badge>
+      )
+    },
+  },
+  {
+    accessorKey: "created_at",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Created At
+          <ChevronsUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const date = row.getValue("created_at") as string
+      return format(new Date(date), "MMM dd, yyyy")
     },
   },
 ]
 
-const data: SurveyResponse[] = [
+// Define filterable columns
+const filterableColumns = [
   {
-    id: "1",
-    employeeName: "John Doe",
-    surveyType: "Quarterly Pulse",
-    submissionDate: "2024-04-01",
-    sentiment: "Positive",
-    response: "Great work environment and supportive team members. The new project management tools have improved our workflow significantly.",
-    category: "Work Environment",
-  },
-  {
-    id: "2",
-    employeeName: "Jane Smith",
-    surveyType: "Workload Assessment",
-    submissionDate: "2024-04-02",
-    sentiment: "Neutral",
-    response: "Current workload is manageable but could use better task prioritization guidelines.",
-    category: "Workload",
-  },
-  {
-    id: "3",
-    employeeName: "Mike Johnson",
-    surveyType: "Team Collaboration",
-    submissionDate: "2024-04-03",
-    sentiment: "Positive",
-    response: "Team meetings are productive and everyone's input is valued. Good communication channels in place.",
-    category: "Team Dynamics",
-  },
-  {
-    id: "4",
-    employeeName: "Sarah Wilson",
-    surveyType: "Career Development",
-    submissionDate: "2024-04-04",
-    sentiment: "Negative",
-    response: "Would like more opportunities for skill development and career advancement within the company.",
-    category: "Career Growth",
+    id: "status",
+    title: "Status",
+    options: [
+      { label: "Active", value: "Active" },
+      { label: "Draft", value: "Draft" },
+      { label: "Closed", value: "Closed" },
+    ],
   },
 ]
 
 export default function SurveysPage() {
+  const [data, setData] = useState<Survey[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
+
+  const fetchSurveys = async (year: string) => {
+    setLoading(true)
+    try {
+      const startDate = `${year}-01-01`
+      const endDate = `${year}-12-31`
+      
+      const { data, error } = await supabase
+        .from('surveys')
+        .select(`
+          id,
+          title,
+          description,
+          start_date,
+          end_date,
+          status,
+          response_count,
+          created_at
+        `)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setData(data || [])
+    } catch (error) {
+      console.error('Error fetching surveys:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSurveys(selectedYear)
+  }, [selectedYear])
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year)
+  }
+
   return (
     <div className="py-8 pr-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Surveys & Feedback</h1>
-          {/* <p className="text-muted-foreground">
-            Monitor and analyze employee feedback and survey responses
-          </p> */}
-        </div>
-        <div className="flex space-x-4">
-          <Button className="cursor-pointer">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            View Analytics
-          </Button>
-          <Button className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Survey
-          </Button>
-        </div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold">Surveys & Feedback</h1>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Survey
+        </Button>
       </div>
-
-      <DataTable columns={columns} data={data} />
+      <DataTable 
+        columns={columns} 
+        data={data} 
+        filterableColumns={filterableColumns}
+        defaultSort={{ id: "created_at", desc: true }}
+        onYearChange={handleYearChange}
+      />
     </div>
   )
 } 

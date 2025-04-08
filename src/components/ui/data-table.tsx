@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { getCurrentYear, getYearOptions } from "@/hooks/getYear"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -53,6 +54,8 @@ interface DataTableProps<TData, TValue> {
     id: string
     desc: boolean
   }
+  showYearFilter?: boolean
+  onYearChange?: (year: string) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -60,6 +63,8 @@ export function DataTable<TData, TValue>({
   data,
   filterableColumns = [],
   defaultSort = { id: "created_at", desc: true },
+  showYearFilter = true,
+  onYearChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([defaultSort])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -69,6 +74,8 @@ export function DataTable<TData, TValue>({
   const [pageSize, setPageSize] = React.useState(10)
   const [pageIndex, setPageIndex] = React.useState(0)
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const [selectedYear, setSelectedYear] = React.useState(getCurrentYear().toString())
+  const yearOptions = getYearOptions()
 
   const table = useReactTable({
     data,
@@ -120,6 +127,17 @@ export function DataTable<TData, TValue>({
     setGlobalFilter("")
     setPageIndex(0)
     setPageSize(10)
+    setSelectedYear(getCurrentYear().toString())
+    if (onYearChange) {
+      onYearChange(getCurrentYear().toString())
+    }
+  }
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year)
+    if (onYearChange) {
+      onYearChange(year)
+    }
   }
 
   return (
@@ -135,6 +153,23 @@ export function DataTable<TData, TValue>({
               className="pl-8"
             />
           </div>
+          {showYearFilter && (
+            <Select
+              value={selectedYear}
+              onValueChange={handleYearChange}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {yearOptions.map((year) => (
+                  <SelectItem key={year.value} value={year.value}>
+                    {year.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {filterableColumns.map((column) => (
             <Select
               key={column.id}
