@@ -25,31 +25,11 @@ interface Attendance {
 const columns: ColumnDef<Attendance>[] = [
   {
     accessorKey: "employee_name",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Employee Name
-          <ChevronsUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: "Employee Name"
   },
   {
     accessorKey: "check_in",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Check In
-          <ChevronsUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: "Check In",
     cell: ({ row }) => {
       const checkIn = row.getValue("check_in") as string
       return format(new Date(checkIn), "MMM dd, yyyy HH:mm")
@@ -57,17 +37,7 @@ const columns: ColumnDef<Attendance>[] = [
   },
   {
     accessorKey: "check_out",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Check Out
-          <ChevronsUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: "Check Out",
     cell: ({ row }) => {
       const checkOut = row.getValue("check_out") as string | null
       if (!checkOut) return "Not checked out"
@@ -76,52 +46,24 @@ const columns: ColumnDef<Attendance>[] = [
   },
   {
     accessorKey: "total_hours",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Total Hours
-          <ChevronsUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: "Total Hours",
     cell: ({ row }) => {
-      const hours = row.getValue("total_hours") as number | null
-      return hours ? `${hours.toFixed(2)} hrs` : "N/A"
+      const totalHours = row.getValue("total_hours") as number | null;
+    
+      if (!totalHours) return "N/A";
+    
+      const hours = Math.floor(totalHours);
+      const minutes = Math.round((totalHours - hours) * 60);
+    
+      return `${hours} hr${minutes > 0 ? ` ${minutes} min` : ''}`;
     },
   },
   {
     accessorKey: "location",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Location
-          <ChevronsUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
+    header: "Location",
+    cell: ({ row }) => {
+      if (!row.getValue("location")) return "-";
     },
-    // cell: ({ row }) => {
-    //   const location = row.getValue("location") as string;
-    //   if (!location) return "-";
-      
-    //   try {
-    //     // Parse location if it's a string
-    //     const locationData = typeof location === 'string' ? JSON.parse(location) : location;
-    //     if (!locationData) return "-";
-        
-    //     // Display the location name if available, otherwise coordinates
-    //     return locationData.name || 
-    //       `${locationData.latitude?.toFixed(4)}, ${locationData.longitude?.toFixed(4)}`;
-    //   } catch (error) {
-    //     console.error("Error parsing location data:", error);
-    //     return "-";
-    //   }
-    // },
   },
 ]
 
@@ -137,7 +79,7 @@ export default function AttendancePage() {
       const endDate = `${year}-12-31`
       
       const { data, error } = await supabase
-        .from('attendance')
+        .from('attendances')
         .select(`
           *,
           users (
@@ -183,7 +125,6 @@ export default function AttendancePage() {
       <DataTable 
         columns={columns} 
         data={data} 
-        defaultSort={{ id: "created_at", desc: true }}
         onYearChange={handleYearChange}
       />
     </div>

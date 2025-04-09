@@ -195,7 +195,6 @@ export default function LeavePage() {
         columns={columns} 
         data={data} 
         filterableColumns={filterableColumns}
-        defaultSort={{ id: "created_at", desc: true }}
         onYearChange={handleYearChange}
       />
     </div>
