@@ -9,6 +9,8 @@ import {
   TrendingUp,
   Clock,
 } from "lucide-react"
+import { ToastDemo, ToastDestructiveDemo, ToastWithActionDemo } from "@/components/ui/toast-demo"
+import { ToastUtilDemo } from "@/components/examples/toast-util-demo"
 
 const overviewCards = [
   {
@@ -76,6 +78,22 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Toast demo */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Toast Notifications</h2>
+        <div className="flex flex-wrap gap-4">
+          <ToastDemo />
+          <ToastDestructiveDemo />
+          <ToastWithActionDemo />
+        </div>
+      </div>
+
+      {/* Toast Utility demo */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Toast Utility Demo</h2>
+        <ToastUtilDemo />
       </div>
 
       {/* Add charts and other components here */}

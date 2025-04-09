@@ -55,6 +55,7 @@ interface DataTableProps<TData, TValue> {
     desc: boolean
   }
   showYearFilter?: boolean
+  yearOptions?: { label: string; value: string }[]
   onYearChange?: (year: string) => void
 }
 
@@ -62,11 +63,13 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   filterableColumns = [],
-  defaultSort = { id: "created_at", desc: true },
+  // defaultSort = { id: "created_at", desc: true },
   showYearFilter = true,
+  yearOptions = getYearOptions(),
   onYearChange,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([defaultSort])
+  // const [sorting, setSorting] = React.useState<SortingState>([defaultSort])
+  const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -75,7 +78,6 @@ export function DataTable<TData, TValue>({
   const [pageIndex, setPageIndex] = React.useState(0)
   const [globalFilter, setGlobalFilter] = React.useState("")
   const [selectedYear, setSelectedYear] = React.useState(getCurrentYear().toString())
-  const yearOptions = getYearOptions()
 
   const table = useReactTable({
     data,
@@ -116,13 +118,14 @@ export function DataTable<TData, TValue>({
         .toLowerCase()
         .includes(String(filterValue).toLowerCase())
     },
-    initialState: {
-      sorting: [defaultSort],
-    },
+    // initialState: {
+    //   sorting: [defaultSort],
+    // },
   })
 
   const resetTable = () => {
-    setSorting([defaultSort])
+    // setSorting([defaultSort])
+    setSorting([])
     setColumnFilters([])
     setGlobalFilter("")
     setPageIndex(0)
@@ -201,9 +204,8 @@ export function DataTable<TData, TValue>({
             <SelectContent>
               <SelectItem value="10">10 per page</SelectItem>
               <SelectItem value="20">20 per page</SelectItem>
-              <SelectItem value="30">30 per page</SelectItem>
-              <SelectItem value="40">40 per page</SelectItem>
-              <SelectItem value="50">50 per page</SelectItem>
+              <SelectItem value="30">50 per page</SelectItem>
+              <SelectItem value="40">100 per page</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -254,7 +256,7 @@ export function DataTable<TData, TValue>({
                     return (
                       <TableHead 
                         key={header.id}
-                        className="text-[#6A1B9A]"
+                        className="text-white bg-[#6A1B9A]"
                       >
                         {header.isPlaceholder ? null : (
                           <div
@@ -294,6 +296,7 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className="hover:text-white hover:bg-[#6A1B9A]"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
@@ -337,7 +340,7 @@ export function DataTable<TData, TValue>({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center justify-center text-sm font-medium">
+          <div className="flex items-center justify-center text-sm">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()}
           </div>
