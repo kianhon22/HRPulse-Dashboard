@@ -1,7 +1,8 @@
 "use client"
 
+import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 export function ToastDemo() {
   const { toast } = useToast()

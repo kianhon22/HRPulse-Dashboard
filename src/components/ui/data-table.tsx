@@ -57,6 +57,7 @@ interface DataTableProps<TData, TValue> {
   showYearFilter?: boolean
   yearOptions?: { label: string; value: string }[]
   onYearChange?: (year: string) => void
+  onRowClick?: (data: TData) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -67,6 +68,7 @@ export function DataTable<TData, TValue>({
   showYearFilter = true,
   yearOptions = getYearOptions(),
   onYearChange,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   // const [sorting, setSorting] = React.useState<SortingState>([defaultSort])
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -296,7 +298,8 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="hover:text-white hover:bg-[#6A1B9A]"
+                    onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                    className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>

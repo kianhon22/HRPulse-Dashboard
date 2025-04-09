@@ -21,52 +21,47 @@ import {
 const sidebarItems = [
   {
     title: "Dashboard",
-    href: "/dashboard",
+    href: "/dashboards",
     icon: LayoutDashboard,
   },
   {
     title: "Employee",
-    href: "/employee",
+    href: "/employees",
     icon: Users,
   },
   {
     title: "Attendance",
-    href: "/attendance",
+    href: "/attendances",
     icon: Calendar,
   },
   {
     title: "Leave",
-    href: "/leave",
+    href: "/leaves",
     icon: Clock,
   },
   {
-    title: "Surveys",
-    href: "/survey",
+    title: "Survey",
+    href: "/surveys",
     icon: MessageSquare,
   },
-  {
-    title: "SurveyRespomse",
-    href: "/survey_response",
-    icon: MessageSquare,
-  },
-  {
-    title: "Feedback",
-    href: "/feedback",
-    icon: Star,
-  },
+  // {
+  //   title: "SurveyRespomse",
+  //   href: "/survey_response",
+  //   icon: MessageSquare,
+  // },
   {
     title: "Reward",
-    href: "/reward",
+    href: "/rewards",
     icon: Gift,
   },
   {
     title: "Recognition",
-    href: "/recognition",
+    href: "/recognitions",
     icon: Award,
   },
   {
     title: "Reports",
-    href: "/report",
+    href: "/reports",
     icon: BarChart3,
   },
 ]

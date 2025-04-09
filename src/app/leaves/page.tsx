@@ -7,6 +7,7 @@ import { Plus } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
+import { LeaveDetailDialog } from "@/components/leave/leave-detail-dialog"
 
 // Define the type for our data
 type Leave = {
@@ -30,7 +31,7 @@ type Leave = {
 const columns: ColumnDef<Leave>[] = [
   {
     accessorKey: "employee_name",
-    header: "Employee Name",
+    header: "Employee",
   },
   {
     accessorKey: "leave_type",
@@ -55,15 +56,19 @@ const columns: ColumnDef<Leave>[] = [
   {
     accessorKey: "reason",
     header: "Reason",
-  },
-  {
-    accessorKey: "hr_remarks",
-    header: "HR Remarks",
     cell: ({ row }) => {
-      const remarks = row.getValue("hr_remarks") as string | null
-      return remarks || "-"
+      const reason = row.getValue("reason") as string | null
+      return reason || "-"
     },
   },
+  // {
+  //   accessorKey: "hr_remarks",
+  //   header: "HR Remarks",
+  //   cell: ({ row }) => {
+  //     const remarks = row.getValue("hr_remarks") as string | null
+  //     return remarks || "-"
+  //   },
+  // },
   {
     accessorKey: "attachment_url",
     header: "Attachment",
@@ -97,14 +102,6 @@ const columns: ColumnDef<Leave>[] = [
       )
     },
   },
-  {
-    accessorKey: "created_at",
-    header: "Created At",
-    cell: ({ row }) => {
-      const date = row.getValue("created_at") as string
-      return format(new Date(date), "MMM dd, yyyy HH:mm")
-    },
-  },
 ]
 
 // Define filterable columns
@@ -124,6 +121,8 @@ export default function LeavePage() {
   const [data, setData] = useState<Leave[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
+  const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const fetchLeaves = async (year: string) => {
     setLoading(true)
@@ -182,6 +181,11 @@ export default function LeavePage() {
     setSelectedYear(year)
   }
 
+  const onRowClick = (leave: Leave) => {
+    setSelectedLeave(leave)
+    setDialogOpen(true)
+  }
+
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-4">
@@ -196,6 +200,14 @@ export default function LeavePage() {
         data={data} 
         filterableColumns={filterableColumns}
         onYearChange={handleYearChange}
+        onRowClick={onRowClick}
+      />
+      
+      <LeaveDetailDialog
+        leave={selectedLeave}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onLeaveUpdated={() => fetchLeaves(selectedYear)}
       />
     </div>
   )
