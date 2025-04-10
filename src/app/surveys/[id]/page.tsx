@@ -9,23 +9,24 @@ import { supabase } from "@/lib/supabase"
 import { ArrowLeft, PencilLine, ChevronDown, ChevronUp } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { showToast } from "@/lib/utils/toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
 
 type Question = {
   id: string
   survey_id: string
-  question_text: string
-  question_type: "multiple_choice" | "text" | "rating"
-  options?: string[]
-  required: boolean
-  order: number
+  question: string
+  category: string
+  created_at: string
 }
 
 type Response = {
   id: string
   survey_id: string
+  question_id: string
   user_id: string
-  answers: Record<string, any>
-  submitted_at: string
+  response: any
+  created_at: string
   user_name: string
 }
 
@@ -33,12 +34,12 @@ type Survey = {
   id: string
   title: string
   description: string | null
+  type: "Text" | "Rating"
+  status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string
   end_date: string
-  status: "Draft" | "Scheduled" | "Active" | "Ended"
   created_at: string
   updated_at: string
-  created_by: string
   questions?: Question[]
 }
 
@@ -49,7 +50,17 @@ export default function SurveyDetailPage() {
   const [responses, setResponses] = useState<Response[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedResponses, setExpandedResponses] = useState<Record<string, boolean>>({})
+  const [activeCategory, setActiveCategory] = useState<string>("")
   const surveyId = useParams()?.id as string
+
+  // Get all unique categories
+  const categories = [...new Set(questions.map(q => q.category))].sort()
+
+  useEffect(() => {
+    if (categories.length > 0 && !activeCategory) {
+      setActiveCategory(categories[0])
+    }
+  }, [categories, activeCategory])
 
   useEffect(() => {
     const fetchSurveyDetails = async () => {
@@ -75,7 +86,7 @@ export default function SurveyDetailPage() {
           .from('survey_questions')
           .select('*')
           .eq('survey_id', surveyId)
-          .order('order', { ascending: true })
+          .order('created_at', { ascending: true })
         
         if (questionsError) {
           showToast.error("Error loading survey questions")
@@ -95,7 +106,7 @@ export default function SurveyDetailPage() {
             )
           `)
           .eq('survey_id', surveyId)
-          .order('submitted_at', { ascending: false })
+          .order('created_at', { ascending: false })
         
         if (responsesError) {
           showToast.error("Error loading survey responses")
@@ -131,11 +142,60 @@ export default function SurveyDetailPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-800'
-      case 'Ended': return 'bg-red-100 text-red-800'
+      case 'Closed': return 'bg-red-100 text-red-800'
       case 'Draft': return 'bg-gray-100 text-gray-800'
       case 'Scheduled': return 'bg-yellow-100 text-yellow-800'
+      case 'Deleted': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  const getRatingLabel = (rating: number) => {
+    switch (rating) {
+      case 1: return 'Extremely Disagree'
+      case 2: return 'Disagree'
+      case 3: return 'Neutral'
+      case 4: return 'Agree'
+      case 5: return 'Extremely Agree'
+      default: return 'Unknown'
+    }
+  }
+
+  const getRatingColor = (rating: number) => {
+    switch (rating) {
+      case 1: return 'text-red-600'
+      case 2: return 'text-orange-600'
+      case 3: return 'text-yellow-600'
+      case 4: return 'text-green-600'
+      case 5: return 'text-green-700'
+      default: return 'text-gray-600'
+    }
+  }
+
+  // Get responses for a specific question
+  const getResponsesForQuestion = (questionId: string) => {
+    return responses.filter(r => r.question_id === questionId)
+  }
+
+  // Calculate rating counts for a question (for rating surveys)
+  const getRatingCounts = (questionId: string) => {
+    const questionResponses = getResponsesForQuestion(questionId)
+    const counts = [0, 0, 0, 0, 0] // For ratings 1-5
+    
+    questionResponses.forEach(response => {
+      const rating = Number(response.response)
+      if (rating >= 1 && rating <= 5) {
+        counts[rating - 1]++
+      }
+    })
+    
+    return counts
+  }
+
+  // Get percentage for a rating
+  const getRatingPercentage = (count: number, total: number) => {
+    if (total === 0) return 0
+    return Math.round((count / total) * 100)
   }
 
   if (loading) {
@@ -167,6 +227,8 @@ export default function SurveyDetailPage() {
     )
   }
 
+  const canViewResponses = survey.status === 'Active' || survey.status === 'Closed'
+
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-8">
@@ -180,7 +242,7 @@ export default function SurveyDetailPage() {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={() => router.push(`/feedback/surveys/${survey.id}/edit`)}
+            onClick={() => router.push(`/surveys/${survey.id}/edit`)}
           >
             <PencilLine className="mr-2 h-4 w-4" />
             Edit Survey
@@ -188,138 +250,131 @@ export default function SurveyDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Survey Information</CardTitle>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(survey.status)}`}>
+                {survey.status}
+              </span>
+            </div>
+            {survey.description && (
+              <CardDescription>{survey.description}</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Survey Type</h3>
+                <p className="capitalize">{survey.type}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Start Date</h3>
+                <p>{survey.start_date ? format(new Date(survey.start_date), "MMMM d, yyyy") : "Not specified"}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">End Date</h3>
+                <p>{survey.end_date ? format(new Date(survey.end_date), "MMMM d, yyyy") : "Not specified"}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Created</h3>
+                <p>{format(new Date(survey.created_at), "MMMM d, yyyy")}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
+                <p>{format(new Date(survey.updated_at), "MMMM d, yyyy")}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Responses</h3>
+                <p>{responses.length} {responses.length === 1 ? 'response' : 'responses'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {categories.length > 0 && (
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Survey Information</CardTitle>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(survey.status)}`}>
-                  {survey.status}
-                </span>
-              </div>
-              {survey.description && (
-                <CardDescription>{survey.description}</CardDescription>
+              <CardTitle>Questions & Responses</CardTitle>
+              {!canViewResponses && responses.length > 0 && (
+                <CardDescription>
+                  Responses are only visible for Active or Closed surveys
+                </CardDescription>
               )}
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Start Date</h3>
-                  <p>{survey.start_date ? format(new Date(survey.start_date), "MMMM d, yyyy") : "Not specified"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">End Date</h3>
-                  <p>{survey.end_date ? format(new Date(survey.end_date), "MMMM d, yyyy") : "Not specified"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Created</h3>
-                  <p>{format(new Date(survey.created_at), "MMMM d, yyyy")}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
-                  <p>{format(new Date(survey.updated_at), "MMMM d, yyyy")}</p>
-                </div>
-              </div>
-
-              <h3 className="text-lg font-medium mb-4">Questions</h3>
-              {questions.length === 0 ? (
-                <p className="text-gray-500">No questions have been added to this survey.</p>
-              ) : (
-                <Accordion type="multiple" className="w-full">
-                  {questions.map((question, index) => (
-                    <AccordionItem key={question.id} value={question.id}>
-                      <AccordionTrigger className="text-left">
-                        <span className="font-medium">
-                          {index + 1}. {question.question_text}
-                          {question.required && <span className="text-red-500 ml-1">*</span>}
-                        </span>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="pl-6">
-                          <p className="text-sm text-gray-500 mb-2">Type: {question.question_type.replace('_', ' ')}</p>
-                          
-                          {question.question_type === "multiple_choice" && question.options && (
-                            <div className="mt-2">
-                              <p className="text-sm font-medium mb-1">Options:</p>
-                              <ul className="list-disc pl-5">
-                                {(question.options as string[]).map((option, idx) => (
-                                  <li key={idx} className="text-sm">{option}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+              <Tabs defaultValue={categories[0]} value={activeCategory} onValueChange={setActiveCategory}>
+                <TabsList className="mb-4 flex flex-wrap">
+                  {categories.map(category => (
+                    <TabsTrigger key={category} value={category}>
+                      {category}
+                    </TabsTrigger>
                   ))}
-                </Accordion>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Responses</CardTitle>
-              <CardDescription>
-                {responses.length} {responses.length === 1 ? 'response' : 'responses'} received
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {responses.length === 0 ? (
-                <p className="text-gray-500">No responses have been submitted yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {responses.map((response) => (
-                    <div key={response.id} className="border rounded-lg p-4">
-                      <div 
-                        className="flex justify-between items-center cursor-pointer"
-                        onClick={() => toggleResponseExpansion(response.id)}
-                      >
-                        <div>
-                          <h4 className="font-medium">{response.user_name}</h4>
-                          <p className="text-sm text-gray-500">
-                            {format(new Date(response.submitted_at), "MMM d, yyyy 'at' h:mm a")}
-                          </p>
-                        </div>
-                        {expandedResponses[response.id] ? (
-                          <ChevronUp className="h-5 w-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-gray-400" />
-                        )}
-                      </div>
-                      
-                      {expandedResponses[response.id] && (
-                        <div className="mt-4 pt-4 border-t">
-                          {questions.map((question) => {
-                            const answer = response.answers[question.id];
-                            return (
-                              <div key={question.id} className="mb-3">
-                                <p className="text-sm font-medium">{question.question_text}</p>
-                                <p className="text-sm">
-                                  {answer === null || answer === undefined ? 
-                                    'Not answered' : 
-                                    String(answer)}
+                </TabsList>
+                
+                {categories.map(category => (
+                  <TabsContent key={category} value={category} className="space-y-6">
+                    {questions
+                      .filter(q => q.category === category)
+                      .map((question, index) => {
+                        const questionResponses = getResponsesForQuestion(question.id)
+                        return (
+                          <Card key={question.id} className="overflow-hidden">
+                            <CardHeader className="bg-muted/50">
+                              <CardTitle className="text-base">{question.question}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                              {!canViewResponses ? (
+                                <p className="text-sm text-muted-foreground">
+                                  Responses will be visible once the survey is Active or Closed.
                                 </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                              ) : questionResponses.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No responses yet for this question.</p>
+                              ) : survey.type === "Rating" ? (
+                                // Display rating summary
+                                <div className="space-y-4">
+                                  {getRatingCounts(question.id).map((count, idx) => {
+                                    const rating = idx + 1
+                                    const percentage = getRatingPercentage(count, questionResponses.length)
+                                    return (
+                                      <div key={idx} className="space-y-1">
+                                        <div className="flex justify-between text-sm">
+                                          <span className={getRatingColor(rating)}>
+                                            {getRatingLabel(rating)}
+                                          </span>
+                                          <span className="font-medium">
+                                            {count} ({percentage}%)
+                                          </span>
+                                        </div>
+                                        <Progress value={percentage} className="h-2" />
+                                      </div>
+                                    )
+                                  })}
+                                  <p className="text-sm text-muted-foreground mt-2">
+                                    Total responses: {questionResponses.length}
+                                  </p>
+                                </div>
+                              ) : (
+                                // Display text responses
+                                <div className="space-y-2">
+                                  {questionResponses.map(response => (
+                                    <div key={response.id} className="border p-2 rounded-md text-sm">
+                                      {response.response || "No answer provided"}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                  </TabsContent>
+                ))}
+              </Tabs>
             </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full" onClick={() => router.push(`/surveys/${survey.id}/responses`)}>
-                View All Responses
-              </Button>
-            </CardFooter>
           </Card>
-        </div>
+        )}
       </div>
     </div>
   )

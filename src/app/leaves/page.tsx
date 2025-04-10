@@ -195,10 +195,6 @@ export default function LeavePage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Leave Request
-          </Button>
         </div>
       </div>
       <DataTable 

@@ -11,26 +11,24 @@ import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { SingleDatePicker } from "@/components/ui/date-picker"
 
 type SurveyQuestion = {
   id?: string
   survey_id: string
-  question_text: string
-  question_type: "multiple_choice" | "text" | "rating"
-  options?: string[]
-  required: boolean
-  order: number
+  question: string
+  category: string
+  created_at?: string
 }
 
 type Survey = {
   id: string
   title: string
   description: string | null
+  type: "text" | "rating"
+  status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string | null
   end_date: string | null
-  status: "Draft" | "Scheduled" | "Active" | "Ended"
 }
 
 export default function EditSurveyPage() {
@@ -41,9 +39,10 @@ export default function EditSurveyPage() {
     id: surveyId,
     title: "",
     description: "",
+    type: "text",
+    status: "Draft",
     start_date: null,
-    end_date: null,
-    status: "Draft"
+    end_date: null
   })
   
   const [questions, setQuestions] = useState<SurveyQuestion[]>([])
@@ -84,7 +83,7 @@ export default function EditSurveyPage() {
           .from('survey_questions')
           .select('*')
           .eq('survey_id', surveyId)
-          .order('order', { ascending: true })
+          .order('created_at', { ascending: true })
         
         if (questionsError) {
           showToast.error("Error loading survey questions")
@@ -119,6 +118,13 @@ export default function EditSurveyPage() {
     }))
   }
   
+  const handleTypeChange = (value: "text" | "rating") => {
+    setSurvey(prev => ({
+      ...prev,
+      type: value
+    }))
+  }
+  
   const handleQuestionChange = (index: number, field: string, value: any) => {
     setQuestions(prev => {
       const updated = [...prev]
@@ -130,48 +136,13 @@ export default function EditSurveyPage() {
     })
   }
   
-  const handleOptionChange = (questionIndex: number, optionIndex: number, value: string) => {
-    setQuestions(prev => {
-      const updated = [...prev]
-      const options = [...(updated[questionIndex].options || [])]
-      options[optionIndex] = value
-      updated[questionIndex].options = options
-      return updated
-    })
-  }
-  
-  const addOption = (questionIndex: number) => {
-    setQuestions(prev => {
-      const updated = [...prev]
-      const question = updated[questionIndex]
-      updated[questionIndex] = {
-        ...question,
-        options: [...(question.options || []), ""]
-      }
-      return updated
-    })
-  }
-  
-  const removeOption = (questionIndex: number, optionIndex: number) => {
-    setQuestions(prev => {
-      const updated = [...prev]
-      const options = [...(updated[questionIndex].options || [])]
-      options.splice(optionIndex, 1)
-      updated[questionIndex].options = options
-      return updated
-    })
-  }
-  
   const addQuestion = () => {
     setQuestions(prev => [
       ...prev,
       {
         survey_id: surveyId,
-        question_text: "",
-        question_type: "text",
-        options: [],
-        required: false,
-        order: prev.length
+        question: "",
+        category: "Workload & Balance"
       }
     ])
   }
@@ -180,12 +151,7 @@ export default function EditSurveyPage() {
     setQuestions(prev => {
       const updated = [...prev]
       updated.splice(index, 1)
-      
-      // Update order for remaining questions
-      return updated.map((q, i) => ({
-        ...q,
-        order: i
-      }))
+      return updated
     })
   }
   
@@ -203,13 +169,8 @@ export default function EditSurveyPage() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i]
       
-      if (!q.question_text.trim()) {
+      if (!q.question.trim()) {
         showToast.error(`Question ${i + 1} text is required`)
-        return false
-      }
-      
-      if (q.question_type === "multiple_choice" && (!q.options || q.options.length < 2)) {
-        showToast.error(`Please provide valid options for question ${i + 1}`)
         return false
       }
     }
@@ -233,9 +194,10 @@ export default function EditSurveyPage() {
         .update({
           title: survey.title,
           description: survey.description,
+          type: survey.type,
+          status: survey.status,
           start_date: startDate?.toISOString() || null,
           end_date: endDate?.toISOString() || null,
-          status: survey.status,
           updated_at: new Date().toISOString()
         })
         .eq('id', surveyId)
@@ -272,11 +234,8 @@ export default function EditSurveyPage() {
           const { error } = await supabase
             .from('survey_questions')
             .update({
-              question_text: question.question_text,
-              question_type: question.question_type,
-              options: question.options,
-              required: question.required,
-              order: question.order
+              question: question.question,
+              category: question.category
             })
             .eq('id', question.id)
           
@@ -291,11 +250,8 @@ export default function EditSurveyPage() {
             .from('survey_questions')
             .insert({
               survey_id: surveyId,
-              question_text: question.question_text,
-              question_type: question.question_type,
-              options: question.options,
-              required: question.required,
-              order: question.order
+              question: question.question,
+              category: question.category
             })
           
           if (error) {
@@ -371,6 +327,22 @@ export default function EditSurveyPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="type">Survey Type</Label>
+                <Select
+                  value={survey.type}
+                  onValueChange={handleTypeChange}
+                >
+                  <SelectTrigger id="type">
+                    <SelectValue placeholder="Select survey type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="rating">Rating (1-5)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={survey.status}
@@ -383,7 +355,8 @@ export default function EditSurveyPage() {
                     <SelectItem value="Draft">Draft</SelectItem>
                     <SelectItem value="Scheduled">Scheduled</SelectItem>
                     <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Ended">Ended</SelectItem>
+                    <SelectItem value="Closed">Closed</SelectItem>
+                    <SelectItem value="Deleted">Deleted</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -391,18 +364,16 @@ export default function EditSurveyPage() {
               <div className="space-y-2">
                 <Label>Start Date</Label>
                 <SingleDatePicker
-                //   date={startDate}
-                //   onDateChange={setStartDate}
-                //   placeholder="Select start date"
+                  date={startDate}
+                  onDateChange={setStartDate}
                 />
               </div>
               
               <div className="space-y-2">
                 <Label>End Date</Label>
                 <SingleDatePicker
-                //   date={endDate}
-                //   onDateChange={setEndDate}
-                //   placeholder="Select end date"
+                  date={endDate}
+                  onDateChange={setEndDate}
                 />
               </div>
             </div>
@@ -441,79 +412,30 @@ export default function EditSurveyPage() {
                     <Label htmlFor={`question-${index}`}>Question Text *</Label>
                     <Input
                       id={`question-${index}`}
-                      value={question.question_text}
-                      onChange={(e) => handleQuestionChange(index, 'question_text', e.target.value)}
+                      value={question.question}
+                      onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
                       placeholder="Enter question text"
                     />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`question-type-${index}`}>Question Type</Label>
-                      <Select
-                        value={question.question_type}
-                        onValueChange={(value) => handleQuestionChange(index, 'question_type', value)}
-                      >
-                        <SelectTrigger id={`question-type-${index}`}>
-                          <SelectValue placeholder="Select question type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Text</SelectItem>
-                          <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                          <SelectItem value="rating">Rating</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 h-10 mt-6">
-                      <Checkbox
-                        id={`required-${index}`}
-                        checked={question.required}
-                        onCheckedChange={(checked: boolean) => 
-                          handleQuestionChange(index, 'required', Boolean(checked))
-                        }
-                      />
-                      <label
-                        htmlFor={`required-${index}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Required question
-                      </label>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`category-${index}`}>Category</Label>
+                    <Select
+                      value={question.category}
+                      onValueChange={(value) => handleQuestionChange(index, 'category', value)}
+                    >
+                      <SelectTrigger id={`category-${index}`}>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Workload & Balance">Workload & Balance</SelectItem>
+                        <SelectItem value="Communication & Engagement">Communication & Engagement</SelectItem>
+                        <SelectItem value="Job Satisfaction">Job Satisfaction</SelectItem>
+                        <SelectItem value="Career & Development">Career & Development</SelectItem>
+                        <SelectItem value="Recognition & Rewards">Recognition & Rewards</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  
-                  {question.question_type === 'multiple_choice' && (
-                    <div className="space-y-2">
-                      <Label>Options</Label>
-                      {(question.options || []).map((option, optionIndex) => (
-                        <div key={optionIndex} className="flex items-center space-x-2">
-                          <Input
-                            value={option}
-                            onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
-                            placeholder={`Option ${optionIndex + 1}`}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeOption(index, optionIndex)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addOption(index)}
-                        className="mt-2"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Option
-                      </Button>
-                    </div>
-                  )}
                 </div>
               ))
             )}

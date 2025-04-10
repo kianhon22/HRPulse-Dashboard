@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,13 +11,6 @@ import { ArrowLeft, Plus, Trash2, GripVertical, Lightbulb } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
 import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -95,22 +88,15 @@ const suggestionsByCategory = {
   ]
 }
 
-export default function CreateSurveyPage() {
+export default function CreateTemplatePage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const fromTemplate = searchParams.get('fromTemplate') === 'true'
-  
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [surveyType, setSurveyType] = useState<QuestionType>("text")
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [questions, setQuestions] = useState<Question[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("Workload & Balance")
   const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([])
-  const [loadingTemplate, setLoadingTemplate] = useState(false)
-  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   
   const categories = [
     "Workload & Balance",
@@ -119,76 +105,6 @@ export default function CreateSurveyPage() {
     "Career & Development",
     "Recognition & Rewards"
   ]
-
-  // Load template data if we're coming from the templates page
-  useEffect(() => {
-    const loadFromTemplate = async () => {
-      const templateId = localStorage.getItem('duplicateTemplateId')
-      if (fromTemplate && templateId) {
-        setLoadingTemplate(true)
-        try {
-          // Fetch template details
-          const { data: templateData, error: templateError } = await supabase
-            .from('surveys')
-            .select('*')
-            .eq('id', templateId)
-            .single()
-          
-          if (templateError) {
-            showToast.error("Error loading template")
-            console.error('Error fetching template:', templateError)
-            return
-          }
-
-          if (templateData) {
-            setTitle(`${templateData.title}`)
-            setDescription(templateData.description || "")
-            setSurveyType(templateData.type as QuestionType)
-          }
-          
-          // Fetch template questions
-          const { data: questionsData, error: questionsError } = await supabase
-            .from('survey_questions')
-            .select('*')
-            .eq('survey_id', templateId)
-            .order('created_at', { ascending: true })
-          
-          if (questionsError) {
-            showToast.error("Error loading template questions")
-            console.error('Error fetching questions:', questionsError)
-            return
-          }
-
-          if (questionsData) {
-            // Transform questions to match local format
-            const formattedQuestions = questionsData.map((q, index) => ({
-              id: uuidv4(),
-              question_text: q.question,
-              category: q.category,
-              order: index
-            }))
-            
-            setQuestions(formattedQuestions)
-            
-            // Set active tab to first question category if available
-            if (formattedQuestions.length > 0) {
-              setActiveTab(formattedQuestions[0].category)
-            }
-          }
-
-          // Clear the template ID from localStorage
-          localStorage.removeItem('duplicateTemplateId')
-        } catch (error) {
-          showToast.error("An unexpected error occurred")
-          console.error('Error loading template:', error)
-        } finally {
-          setLoadingTemplate(false)
-        }
-      }
-    }
-
-    loadFromTemplate()
-  }, [fromTemplate])
 
   const addQuestion = (category: string) => {
     const newQuestion: Question = {
@@ -237,7 +153,7 @@ export default function CreateSurveyPage() {
   const handleSubmit = async () => {
     // Validate form
     if (!title.trim()) {
-      showToast.error("Please enter a survey title")
+      showToast.error("Please enter a template title")
       return
     }
 
@@ -258,30 +174,28 @@ export default function CreateSurveyPage() {
     setIsSubmitting(true)
 
     try {
-      // Create survey
-      const { data: survey, error: surveyError } = await supabase
+      // Create template
+      const { data: template, error: templateError } = await supabase
         .from('surveys')
         .insert({
           title,
           description: description || null,
           type: surveyType,
-          status: "Draft",
-          start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
-          end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
-          is_template: saveAsTemplate // Set if this is a template
+          status: "Draft", // Templates are always in draft
+          is_template: true // This is a template
         })
         .select()
         .single()
 
-      if (surveyError) {
-        showToast.error("Failed to create survey: " + surveyError.message)
+      if (templateError) {
+        showToast.error("Failed to create template: " + templateError.message)
         setIsSubmitting(false)
         return
       }
 
       // Insert questions
       const questionsToInsert = questions.map(q => ({
-        survey_id: survey.id,
+        survey_id: template.id,
         question: q.question_text,
         category: q.category,
         order: q.order
@@ -297,33 +211,14 @@ export default function CreateSurveyPage() {
         return
       }
 
-      showToast.success(saveAsTemplate ? "Template created successfully" : "Survey created successfully")
-      
-      if (saveAsTemplate) {
-        router.push('/surveys/templates')
-      } else {
-        router.push(`/surveys/${survey.id}`)
-      }
+      showToast.success("Template created successfully")
+      router.push('/surveys/templates')
     } catch (error) {
-      console.error("Error creating survey:", error)
+      console.error("Error creating template:", error)
       showToast.error("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  if (loadingTemplate) {
-    return (
-      <div className="py-8 pr-8">
-        <div className="flex items-center mb-4">
-          <Button variant="ghost" onClick={() => router.back()} className="mr-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-3xl font-bold">Loading Template...</h1>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -333,22 +228,22 @@ export default function CreateSurveyPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <h1 className="text-3xl font-bold">Create New Survey</h1>
+        <h1 className="text-3xl font-bold">Create New Template</h1>
       </div>
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Survey Details</CardTitle>
+            <CardTitle>Template Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="title">Survey Title</Label>
+              <Label htmlFor="title">Template Title</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter survey title"
+                placeholder="Enter template title"
                 className="mt-1"
               />
             </div>
@@ -358,7 +253,7 @@ export default function CreateSurveyPage() {
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter survey description"
+                placeholder="Enter template description"
                 className="mt-1"
               />
             </div>
@@ -374,65 +269,6 @@ export default function CreateSurveyPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full mt-1 justify-start text-left font-normal"
-                    >
-                      {startDate ? format(startDate, "PPP") : "Select start date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label>End Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full mt-1 justify-start text-left font-normal"
-                    >
-                      {endDate ? format(endDate, "PPP") : "Select end date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      initialFocus
-                      disabled={(date) => 
-                        startDate ? date < startDate : false
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            {/* <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="saveAsTemplate"
-                checked={saveAsTemplate}
-                onChange={(e) => setSaveAsTemplate(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <Label htmlFor="saveAsTemplate" className="text-sm font-medium">
-                Save as template (will not be deployed as an active survey)
-              </Label>
-            </div> */}
           </CardContent>
         </Card>
 
@@ -469,7 +305,7 @@ export default function CreateSurveyPage() {
                         <DialogHeader>
                           <DialogTitle>Suggested Questions for {category}</DialogTitle>
                           <DialogDescription>
-                            Select questions to add to your survey. You can select multiple questions.
+                            Select questions to add to your template. You can select multiple questions.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-2 max-h-[60vh] overflow-y-auto py-4">
@@ -563,7 +399,7 @@ export default function CreateSurveyPage() {
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : saveAsTemplate ? "Create Template" : "Create Survey"}
+            {isSubmitting ? "Creating..." : "Create Template"}
           </Button>
         </div>
       </div>

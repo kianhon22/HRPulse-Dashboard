@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus, Eye, PencilLine } from "lucide-react"
+import { Plus, Eye, PencilLine, FileText } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
@@ -14,12 +14,12 @@ type Survey = {
   id: string
   title: string
   description: string | null
+  type: "text" | "rating"
+  status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string
   end_date: string
-  status: "Draft" | "Scheduled" | "Active" | "Ended"
   created_at: string
   updated_at: string
-  created_by: string
 }
 
 export default function FeedbackPage() {
@@ -44,6 +44,18 @@ export default function FeedbackPage() {
       },
     },
     {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => {
+        const type = row.getValue("type") as string
+        return (
+          <div className="capitalize font-medium">
+            {type}
+          </div>
+        )
+      },
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
@@ -51,9 +63,10 @@ export default function FeedbackPage() {
         return (
           <div className={`capitalize font-medium ${
             status === "Active" ? "text-green-600" :
-            status === "Ended" ? "text-red-600" :
+            status === "Closed" ? "text-red-600" :
             status === "Draft" ? "text-gray-600" :
-            "text-yellow-600"
+            status === "Scheduled" ? "text-yellow-600" :
+            "text-gray-600"
           }`}>
             {status}
           </div>
@@ -121,7 +134,16 @@ export default function FeedbackPage() {
         { label: "Draft", value: "Draft" },
         { label: "Scheduled", value: "Scheduled" },
         { label: "Active", value: "Active" },
-        { label: "Ended", value: "Ended" },
+        { label: "Closed", value: "Closed" },
+        { label: "Deleted", value: "Deleted" },
+      ],
+    },
+    {
+      id: "type",
+      title: "Type",
+      options: [
+        { label: "Text", value: "text" },
+        { label: "Rating", value: "rating" },
       ],
     },
   ]
@@ -138,6 +160,7 @@ export default function FeedbackPage() {
       const { data: surveysData, error } = await supabase
         .from('surveys')
         .select()
+        .eq('is_template', false) // Exclude templates
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .order('created_at', { ascending: false })
@@ -171,10 +194,19 @@ export default function FeedbackPage() {
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Surveys & Feedback</h1>
-        <Button onClick={() => router.push('/surveys/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Survey
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={() => router.push('/surveys/templates')}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Templates
+          </Button>
+          <Button onClick={() => router.push('/surveys/create')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Survey
+          </Button>
+        </div>
       </div>
       <DataTable 
         columns={columns} 
