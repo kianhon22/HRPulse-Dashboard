@@ -118,8 +118,8 @@ export default function CreateSurveyPage() {
         .insert({
           title,
           description: description || null,
-          start_date: startDate ? startDate.toISOString() : null,
-          end_date: endDate ? endDate.toISOString() : null,
+          start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
+          end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
           status,
           created_by: "current_user_id" // Replace with actual user ID from auth context
         })

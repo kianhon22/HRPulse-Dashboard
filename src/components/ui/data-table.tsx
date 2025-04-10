@@ -14,6 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { ChevronLeft, ChevronRight, Search, RefreshCw, ChevronsUpDown, ChevronUp, ChevronDown } from "lucide-react"
+import { DateRange } from "react-day-picker"
 
 import {
   Table,
@@ -41,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { getCurrentYear, getYearOptions } from "@/hooks/getYear"
+import { SingleDatePicker, RangeDatePicker } from "@/components/ui/date-picker"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -49,6 +51,7 @@ interface DataTableProps<TData, TValue> {
     id: string
     title: string
     options: { label: string; value: string }[]
+    width?: string
   }[]
   defaultSort?: {
     id: string
@@ -58,6 +61,11 @@ interface DataTableProps<TData, TValue> {
   yearOptions?: { label: string; value: string }[]
   onYearChange?: (year: string) => void
   onRowClick?: (data: TData) => void
+  showDateFilter?: boolean
+  singleDate?: Date | undefined
+  onDateChange?: (date: Date | undefined) => void
+  dateRange?: DateRange | undefined
+  onDateRangeChange?: (range: DateRange | undefined) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -69,6 +77,9 @@ export function DataTable<TData, TValue>({
   yearOptions = getYearOptions(),
   onYearChange,
   onRowClick,
+  showDateFilter = false,
+  onDateRangeChange,
+  dateRange,
 }: DataTableProps<TData, TValue>) {
   // const [sorting, setSorting] = React.useState<SortingState>([defaultSort])
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -148,8 +159,8 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       <div className="flex items-center justify-between py-4">
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative w-[200px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
@@ -158,12 +169,27 @@ export function DataTable<TData, TValue>({
               className="pl-8"
             />
           </div>
-          {showYearFilter && (
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value: string) => setPageSize(Number(value))}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Select page size" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10 per page</SelectItem>
+              <SelectItem value="20">20 per page</SelectItem>
+              <SelectItem value="30">50 per page</SelectItem>
+              <SelectItem value="40">100 per page</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {showYearFilter && !showDateFilter && (
             <Select
               value={selectedYear}
               onValueChange={handleYearChange}
             >
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-[78px]">
                 <SelectValue placeholder="Select Year" />
               </SelectTrigger>
               <SelectContent>
@@ -175,6 +201,22 @@ export function DataTable<TData, TValue>({
               </SelectContent>
             </Select>
           )}
+          
+          {/* {showDateFilter && !showYearFilter && (
+            <SingleDatePicker
+              date={date}
+              onDateChange={onDateChange}
+            />
+          )} */}
+
+          {showDateFilter && !showYearFilter && (
+            <RangeDatePicker 
+              // dateRange={dateRange}
+              // onDateRangeChange={onDateRangeChange}
+              className="w-[180px]"
+            />
+          )}
+          
           {filterableColumns.map((column) => (
             <Select
               key={column.id}
@@ -183,11 +225,11 @@ export function DataTable<TData, TValue>({
                 table.getColumn(column.id)?.setFilterValue(value === "all" ? "" : value)
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className={column.width || "w-[150px]"}>
                 <SelectValue placeholder={`Filter by ${column.title}`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All {column.title}</SelectItem>
+                <SelectItem value="all">{column.title}</SelectItem>
                 {column.options.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -196,33 +238,21 @@ export function DataTable<TData, TValue>({
               </SelectContent>
             </Select>
           ))}
-          <Select
-            value={pageSize.toString()}
-            onValueChange={(value: string) => setPageSize(Number(value))}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select page size" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10 per page</SelectItem>
-              <SelectItem value="20">20 per page</SelectItem>
-              <SelectItem value="30">50 per page</SelectItem>
-              <SelectItem value="40">100 per page</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
+        
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
             onClick={resetTable}
             className="h-10 w-22 hover:bg-[#6A1B9A] hover:text-white cursor-pointer"
+            title="Refresh"
           >
             Refresh <RefreshCw className="ml-1 h-4 w-4" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto hover:bg-[#6A1B9A] hover:text-white cursor-pointer">
+              <Button variant="outline" className="hover:bg-[#6A1B9A] hover:text-white cursor-pointer">
                 Columns
               </Button>
             </DropdownMenuTrigger>
@@ -299,7 +329,7 @@ export function DataTable<TData, TValue>({
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-                    className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                    className={onRowClick ? "cursor-pointer hover:bg-[#6A1B9A] hover:text-white" : ""}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>

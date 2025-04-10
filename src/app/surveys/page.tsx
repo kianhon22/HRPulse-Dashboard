@@ -78,6 +78,7 @@ export default function FeedbackPage() {
     },
     {
       id: "actions",
+      header: "Action",
       cell: ({ row }) => {
         const survey = row.original
         

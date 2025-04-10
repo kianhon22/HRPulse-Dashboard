@@ -1,42 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { v4 as uuidv4 } from "uuid"
+import { SingleDatePicker } from "@/components/ui/date-picker"
+import { format } from "date-fns" // already used in date-picker.tsx
 
 type Employee = {
   name: string
   email: string
+  phone: string
+  address: string
+  work_mode: string
+  employment_type: string
   position: string
   department: string
-  hire_date: string | null
-  phone: string | null
-  status: "Active" | "Inactive" | "On Leave"
-  address: string | null
-  manager_id: string | null
-  bio: string | null
-  employee_id: string | null
-}
-
-type Manager = {
-  id: string
-  name: string
+  join_company_date: string | null
+  password: string
 }
 
 export default function CreateEmployeePage() {
@@ -44,43 +31,17 @@ export default function CreateEmployeePage() {
   const [formData, setFormData] = useState<Employee>({
     name: "",
     email: "",
+    phone: "",
+    address: "",
+    work_mode: "",
+    employment_type: "",
     position: "",
     department: "",
-    hire_date: null,
-    phone: null,
-    status: "Active",
-    address: null,
-    manager_id: null,
-    bio: null,
-    employee_id: null
+    join_company_date: null,
+    password: "",
   })
-  const [hireDate, setHireDate] = useState<Date | undefined>(undefined)
-  const [managers, setManagers] = useState<Manager[]>([])
+  const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Fetch managers for the dropdown
-  useEffect(() => {
-    const fetchManagers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, name')
-          .eq('status', 'Active')
-          .order('name', { ascending: true })
-        
-        if (error) {
-          console.error('Error fetching managers:', error)
-          return
-        }
-        
-        setManagers(data || [])
-      } catch (error) {
-        console.error('Error:', error)
-      }
-    }
-
-    fetchManagers()
-  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -98,10 +59,10 @@ export default function CreateEmployeePage() {
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setHireDate(date)
+    setJoiningDate(date)
     setFormData(prev => ({
       ...prev,
-      hire_date: date ? date.toISOString() : null
+      join_company_date: date ? format(date, "yyyy-MM-dd") : null,
     }))
   }
 
@@ -112,6 +73,10 @@ export default function CreateEmployeePage() {
     }
     if (!formData.email.trim()) {
       showToast.error("Email address is required")
+      return false
+    }
+    if (!formData.password.trim()) {
+      showToast.error("Password is required")
       return false
     }
     if (!formData.position.trim()) {
@@ -131,32 +96,60 @@ export default function CreateEmployeePage() {
     setIsSubmitting(true)
 
     try {
-      // Generate default employee ID if not provided
-      const employeeId = formData.employee_id || `EMP-${Math.floor(100000 + Math.random() * 900000)}`
-      
-      // Create employee
+      // Step 1: Create auth user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      })
+
+      if (authError) {
+        showToast.error("Failed to create user authentication: " + authError.message)
+        setIsSubmitting(false)
+        return
+      }
+
+      // Ensure we have a user ID from the auth system
+      if (!authData.user || !authData.user.id) {
+        console.log('ok')
+        showToast.error("Failed to obtain user ID from authentication")
+        setIsSubmitting(false)
+        return
+      }
+
+      const userId = authData.user.id
+
+      // Step 2: Create employee record in the users table with the auth ID
       const { data, error } = await supabase
         .from('users')
-        .insert({
-          ...formData,
-          employee_id: employeeId,
-          // Include default password hash for new user accounts
-          password_hash: "default-password-hash" // This would be replaced with a proper hash in a real app
+        .update({
+          id: userId, // Use the auth user ID
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          work_mode: formData.work_mode,
+          employment_type: formData.employment_type,
+          position: formData.position,
+          department: formData.department,
+          join_company_date: formData.join_company_date,
         })
+        .eq("id", userId)
         .select()
         .single()
 
       if (error) {
-        showToast.error("Failed to create employee: " + error.message)
+        // If there was an error creating the user profile, we should clean up the auth user
+        await supabase.auth.admin.deleteUser(userId)
+        showToast.error("Failed to create employee profile: " + error.message)
         setIsSubmitting(false)
         return
       }
 
       showToast.success("Employee created successfully")
-      router.push(`/employees/${data.id}`)
-    } catch (error) {
+      router.push(`/employees/${userId}`)
+    } catch (error: any) {
       console.error("Error creating employee:", error)
-      showToast.error("An unexpected error occurred")
+      showToast.error("An unexpected error occurred: " + (error.message || error))
     } finally {
       setIsSubmitting(false)
     }
@@ -180,6 +173,18 @@ export default function CreateEmployeePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter email address"
+                  className="mt-1"
+                />
+              </div>
+              <div>
                 <Label htmlFor="name">Full Name *</Label>
                 <Input
                   id="name"
@@ -191,14 +196,14 @@ export default function CreateEmployeePage() {
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email Address *</Label>
+                <Label htmlFor="password">Password *</Label>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="Enter email address"
+                  placeholder="Enter password"
                   className="mt-1"
                 />
               </div>
@@ -212,20 +217,8 @@ export default function CreateEmployeePage() {
                   placeholder="Enter phone number"
                   className="mt-1"
                 />
-              </div>
-              <div>
-                <Label htmlFor="employee_id">Employee ID</Label>
-                <Input
-                  id="employee_id"
-                  name="employee_id"
-                  value={formData.employee_id || ""}
-                  onChange={handleInputChange}
-                  placeholder="Auto-generated if not provided"
-                  className="mt-1"
-                />
-              </div>
+              </div>              
             </div>
-
             <div>
               <Label htmlFor="address">Address</Label>
               <Input
@@ -247,6 +240,37 @@ export default function CreateEmployeePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <Label htmlFor="work_mode">Work Mode *</Label>
+                <Select
+                  value={formData.work_mode}
+                  onValueChange={(value) => handleSelectChange("work_mode", value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select Work Mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Onsite">Onsite</SelectItem>
+                    <SelectItem value="Remote">Remote</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="employment_type">Employment Type *</Label>
+                <Select
+                  value={formData.employment_type}
+                  onValueChange={(value) => handleSelectChange("employment_type", value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select Employment Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Full Time">Full Time</SelectItem>
+                    <SelectItem value="Part Time">Part Time</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label htmlFor="position">Position *</Label>
                 <Input
                   id="position"
@@ -264,99 +288,41 @@ export default function CreateEmployeePage() {
                   onValueChange={(value) => handleSelectChange("department", value)}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select department" />
+                    <SelectValue placeholder="Select Department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="HR">HR</SelectItem>
-                    <SelectItem value="IT">IT</SelectItem>
+                    <SelectItem value="Design">Design</SelectItem>
+                    <SelectItem value="Technical">Technical</SelectItem>
                     <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Development">Development</SelectItem>
                     <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
                     <SelectItem value="Sales">Sales</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Hire Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full mt-1 justify-start text-left font-normal"
-                    >
-                      {hireDate ? format(hireDate, "PPP") : "Select hire date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={hireDate}
-                      onSelect={handleDateChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Label>Joining Date</Label><br />
+                <SingleDatePicker
+                  date={joiningDate}
+                  onDateChange={handleDateChange}
+                />
               </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: "Active" | "Inactive" | "On Leave") => handleSelectChange("status", value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                    <SelectItem value="On Leave">On Leave</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="manager_id">Manager</Label>
-                <Select
-                  value={formData.manager_id || ""}
-                  onValueChange={(value) => handleSelectChange("manager_id", value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select manager" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">None</SelectItem>
-                    {managers.map((manager) => (
-                      <SelectItem key={manager.id} value={manager.id}>
-                        {manager.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                name="bio"
-                value={formData.bio || ""}
-                onChange={handleInputChange}
-                placeholder="Enter employee bio or notes"
-                className="mt-1"
-                rows={4}
-              />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end gap-4">
-            <Button variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+          <CardFooter className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => router.push('/employees')}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Employee"}
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Employee
             </Button>
           </CardFooter>
         </Card>
       </div>
     </div>
-  )
+  );
 } 

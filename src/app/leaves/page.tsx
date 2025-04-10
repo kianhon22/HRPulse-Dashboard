@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, Download } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
@@ -190,10 +190,16 @@ export default function LeavePage() {
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Leave Management</h1>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Leave Request
-        </Button>
+        <div className="flex space-x-4">
+          <Button>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            New Leave Request
+          </Button>
+        </div>
       </div>
       <DataTable 
         columns={columns} 

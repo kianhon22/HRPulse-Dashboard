@@ -85,11 +85,11 @@ export default function RecognitionPage() {
           </p> */}
         </div>
         <div className="flex space-x-4">
-          <Button className="cursor-pointer">
+          <Button>
             <Trophy className="mr-2 h-4 w-4" />
             Leaderboard
           </Button>
-          <Button className="cursor-pointer">
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Nominate
           </Button>

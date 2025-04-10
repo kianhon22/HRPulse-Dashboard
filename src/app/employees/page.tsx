@@ -8,6 +8,8 @@ import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
 import { useRouter } from "next/navigation"
+import { exportToCSV } from "@/lib/utils/csv-export"
+import { titleCase } from "@/lib/utils/formatText"
 
 // Define the type for our data
 type Employee = {
@@ -26,7 +28,7 @@ type Employee = {
 export default function EmployeesPage() {
   const router = useRouter()
   const [data, setData] = useState<Employee[]>([])
-  const [departmentOptions, setDepartmentOptions] = useState<{ label: string; value: string }[]>([])
+  const [departmentOptions, setDepartmentOptions] = useState<{ label: string; value: any }[]>([])
   const [loading, setLoading] = useState(true)
 
   const columns: ColumnDef<Employee>[] = [
@@ -53,6 +55,9 @@ export default function EmployeesPage() {
     {
       accessorKey: "position",
       header: "Position",
+      cell: ({ row }) => {
+        return titleCase(row.getValue("position"))
+      },
     },
     {
       accessorKey: "join_company_date",
@@ -111,28 +116,11 @@ export default function EmployeesPage() {
     },
   ]
 
-  // Define filterable columns
-  const filterableColumns = [
-    {
-      id: "is_active",
-      title: "Status",
-      options: [
-        { label: "Active", value: 'true' },
-        { label: "Inactive", value: 'false' },
-      ],
-    },
-    {
-      id: "department",
-      title: "Departments",
-      options: departmentOptions
-    },
-  ]
-
   const fetchEmployees = async () => {
     setLoading(true)
     
     try {
-      const { data: employeesData, error } = await supabase
+      const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq('role', 'employee')
@@ -143,7 +131,7 @@ export default function EmployeesPage() {
         return
       }
       
-      setData(employeesData || [])
+      setData(data || [])
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -178,35 +166,65 @@ export default function EmployeesPage() {
     fetchDepartments()
   }, [])
 
-  const handleRowClick = (employee: Employee) => {
-    router.push(`/employees/${employee.id}`)
-  }
-
   return (
-    <div className="py-8 pr-8">
-      <div className="flex items-center justify-between mb-4">
+    <div className="container py-8 pr-8">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Employees</h1>
-        <Button onClick={() => router.push('/employees/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Employee
-        </Button>
+        <div className="flex space-x-4">
+          <Button onClick={() => exportToCSV(columns, data, "employees")}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button onClick={() => router.push("/employees/create")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Employee
+          </Button>
+        </div>
       </div>
-      <DataTable 
-        columns={columns} 
-        data={data} 
-        filterableColumns={filterableColumns}
-        onRowClick={handleRowClick}
+      <DataTable
+        showYearFilter = {false}
+        columns={columns}
+        data={data}
+        filterableColumns={[
+          {
+            id: "is_active",
+            title: "Status",
+            width: "w-[85px]",
+            options: [
+              { label: "Active", value: true },
+              { label: "Inactive", value: false },
+            ],
+          },
+          {
+            id: "work_mode",
+            title: "Mode",
+            width: "w-[80px]",
+            options: ["Onsit", "Remote"].map(mode => ({
+              label: mode,
+              value: mode,
+            })),
+          },
+          {
+            id: "employment_type",
+            title: "Employment",
+            width: "w-[125px]",
+            options: ["Full Time", "Part Time", "Internship"].map(mode => ({
+              label: mode,
+              value: mode,
+            })),
+          },
+          {
+            id: "department",
+            title: "Department",
+            width: "w-[120px]",
+            options: departmentOptions.map(dept => ({
+              label: dept.label,
+              value: dept.value,
+            })),
+          },
+        ]}
+        onRowClick={(row) => router.push(`/employees/${row.id}`)}
       />
     </div>
   )
-} 
-{/* <div className="flex space-x-4">
-<Button>
-  <Download className="mr-2 h-4 w-4" />
-  Export
-</Button>
-<Button>
-  <Plus className="mr-2 h-4 w-4" />
-  Add Employee
-</Button>
-</div> */}
+}
