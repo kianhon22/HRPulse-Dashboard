@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Plus, Copy, FileText } from "lucide-react"
+import { ArrowLeft, Plus, Copy, FileText, PencilLine } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -193,10 +193,19 @@ export default function TemplatesPage() {
                         </CardDescription>
                       )}
                     </div>
-                    <Button onClick={() => handleDuplicateTemplate(activeTemplate.id)}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Duplicate
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => router.push(`/surveys/templates/${activeTemplate.id}/edit`)}
+                      >
+                        <PencilLine className="mr-2 h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button onClick={() => handleDuplicateTemplate(activeTemplate.id)}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Duplicate
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

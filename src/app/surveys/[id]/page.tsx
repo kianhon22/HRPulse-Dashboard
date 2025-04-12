@@ -26,6 +26,14 @@ type Response = {
   question_id: string
   user_id: string
   response: any
+  sentiment?: {
+    top_label: string
+    confidence: number
+    all_scores: {
+      label: string
+      score: number
+    }[]
+  }
   created_at: string
   user_name: string
 }
@@ -34,7 +42,7 @@ type Survey = {
   id: string
   title: string
   description: string | null
-  type: "Text" | "Rating"
+  type: "text" | "rating"
   status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string
   end_date: string
@@ -198,6 +206,56 @@ export default function SurveyDetailPage() {
     return Math.round((count / total) * 100)
   }
 
+  // Calculate sentiment analysis summary for text responses
+  const getSentimentSummary = (questionId: string) => {
+    const questionResponses = getResponsesForQuestion(questionId)
+    const sentiments = {
+      POSITIVE: 0,
+      NEGATIVE: 0,
+      NEUTRAL: 0,
+      total: 0
+    }
+    
+    questionResponses.forEach(response => {
+      if (response.sentiment?.top_label) {
+        sentiments[response.sentiment.top_label as keyof typeof sentiments]++
+        sentiments.total++
+      }
+    })
+    
+    return sentiments
+  }
+
+  // Get sentiment color
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment) {
+      case 'POSITIVE': return 'text-green-600'
+      case 'NEGATIVE': return 'text-red-600'
+      case 'NEUTRAL': return 'text-yellow-600'
+      default: return 'text-gray-600'
+    }
+  }
+
+  // Get sentiment background color
+  const getSentimentBgColor = (sentiment: string) => {
+    switch (sentiment) {
+      case 'POSITIVE': return 'bg-green-100'
+      case 'NEGATIVE': return 'bg-red-100'
+      case 'NEUTRAL': return 'bg-yellow-100'
+      default: return 'bg-gray-100'
+    }
+  }
+
+  // Get sentiment icon
+  const getSentimentIcon = (sentiment: string) => {
+    switch (sentiment) {
+      case 'POSITIVE': return '😀'
+      case 'NEGATIVE': return '😞'
+      case 'NEUTRAL': return '😐'
+      default: return '❓'
+    }
+  }
+
   if (loading) {
     return (
       <div className="py-8 pr-8">
@@ -331,7 +389,7 @@ export default function SurveyDetailPage() {
                                 </p>
                               ) : questionResponses.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No responses yet for this question.</p>
-                              ) : survey.type === "Rating" ? (
+                              ) : survey.type === "rating" ? (
                                 // Display rating summary
                                 <div className="space-y-4">
                                   {getRatingCounts(question.id).map((count, idx) => {
@@ -341,7 +399,7 @@ export default function SurveyDetailPage() {
                                       <div key={idx} className="space-y-1">
                                         <div className="flex justify-between text-sm">
                                           <span className={getRatingColor(rating)}>
-                                            {getRatingLabel(rating)}
+                                            {rating} - {getRatingLabel(rating)}
                                           </span>
                                           <span className="font-medium">
                                             {count} ({percentage}%)
@@ -356,13 +414,72 @@ export default function SurveyDetailPage() {
                                   </p>
                                 </div>
                               ) : (
-                                // Display text responses
-                                <div className="space-y-2">
-                                  {questionResponses.map(response => (
-                                    <div key={response.id} className="border p-2 rounded-md text-sm">
-                                      {response.response || "No answer provided"}
+                                // Display text responses with sentiment analysis
+                                <div className="space-y-4">
+                                  {/* Sentiment analysis summary */}
+                                  <div className="mb-6 pb-4 border-b">
+                                    <h4 className="text-sm font-medium mb-3">Sentiment Analysis</h4>
+                                    <div className="grid grid-cols-3 gap-3">
+                                      {['POSITIVE', 'NEUTRAL', 'NEGATIVE'].map(sentiment => {
+                                        const sentiments = getSentimentSummary(question.id)
+                                        const count = sentiments[sentiment as keyof typeof sentiments]
+                                        const percentage = sentiments.total > 0 
+                                          ? Math.round((count / sentiments.total) * 100) 
+                                          : 0
+                                        
+                                        return (
+                                          <div 
+                                            key={sentiment} 
+                                            className={`rounded-lg p-3 ${getSentimentBgColor(sentiment)}`}
+                                          >
+                                            <div className="flex justify-between items-center mb-1">
+                                              <span className={`text-sm font-medium ${getSentimentColor(sentiment)}`}>
+                                                {getSentimentIcon(sentiment)} {sentiment.charAt(0) + sentiment.slice(1).toLowerCase()}
+                                              </span>
+                                              <span className="text-sm font-bold">
+                                                {percentage}%
+                                              </span>
+                                            </div>
+                                            <Progress 
+                                              value={percentage} 
+                                              className="h-2" 
+                                            />
+                                            <p className="text-xs mt-1 text-gray-600">
+                                              {count} {count === 1 ? 'response' : 'responses'}
+                                            </p>
+                                          </div>
+                                        )
+                                      })}
                                     </div>
-                                  ))}
+                                  </div>
+                                  
+                                  {/* Individual responses */}
+                                  <h4 className="text-sm font-medium mb-2">Individual Responses</h4>
+                                  <div className="space-y-2">
+                                    {questionResponses.map(response => {
+                                      const sentiment = response.sentiment?.top_label || 'UNKNOWN'
+                                      const confidence = response.sentiment?.confidence
+                                        ? Math.round(response.sentiment.confidence * 100)
+                                        : null
+                                        
+                                      return (
+                                        <div key={response.id} className="border rounded-md overflow-hidden">
+                                          {/* Sentiment badge */}
+                                          {sentiment !== 'UNKNOWN' && (
+                                            <div className={`px-3 py-1 text-xs font-medium ${getSentimentBgColor(sentiment)}`}>
+                                              {getSentimentIcon(sentiment)} {sentiment.charAt(0) + sentiment.slice(1).toLowerCase()}
+                                              {confidence !== null && ` (${confidence}% confidence)`}
+                                            </div>
+                                          )}
+                                          
+                                          {/* Response text */}
+                                          <div className="p-3 text-sm">
+                                            {response.response || "No answer provided"}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
                                 </div>
                               )}
                             </CardContent>
