@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus, Download } from "lucide-react"
+import { Plus, ThumbsUp, ShieldCheck, ShieldX, Download } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
@@ -92,15 +93,12 @@ const columns: ColumnDef<Leave>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       return (
-        <div className={`capitalize font-medium ${
-          status === "Approved" ? "text-green-600" :
-          status === "Rejected" ? "text-red-600" :
-          "text-yellow-600"
-        }`}>
+        <Badge className={getStatusColor(status)}>
+          {getStatusIcon(status)}
           {status}
-        </div>
+        </Badge>
       )
-    },
+    }
   },
 ]
 
@@ -116,6 +114,24 @@ const filterableColumns = [
     ],
   },
 ]
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'Approved': return 'bg-green-100 text-green-800 border-green-200'
+    case 'Rejected': return 'bg-red-100 text-red-800 border-red-200'
+    case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    default: return 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+}
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'Approved': return <ShieldCheck className="mr-1 h-3 w-3" />
+    case 'Rejected': return <ShieldX className="mr-1 h-3 w-3" />
+    case 'Pending': return <ThumbsUp className="mr-1 h-3 w-3" />
+    default: return null
+  }
+}
 
 export default function LeavePage() {
   const [data, setData] = useState<Leave[]>([])

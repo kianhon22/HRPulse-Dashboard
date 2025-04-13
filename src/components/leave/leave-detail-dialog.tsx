@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { format } from "date-fns"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
+import { ShieldCheck, ShieldX } from "lucide-react"
 
 // Define the Leave type
 type Leave = {
@@ -159,19 +160,20 @@ export function LeaveDetailDialog({ leave, open, onOpenChange, onLeaveUpdated }:
 
         {leave.status === "Pending" && (
           <DialogFooter className="flex gap-2">
-            <Button
+            {/* <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
               Cancel
-            </Button>
+            </Button> */}
             <Button
               variant="secondary"
               onClick={() => handleStatusUpdate("Rejected")}
               disabled={isSubmitting}
               className="bg-red-100 text-red-600 hover:bg-red-200"
             >
+              <ShieldX className="h-4 w-4 mr-2" />
               Reject
             </Button>
             <Button
@@ -179,6 +181,7 @@ export function LeaveDetailDialog({ leave, open, onOpenChange, onLeaveUpdated }:
               disabled={isSubmitting}
               className="bg-green-100 text-green-600 hover:bg-green-200"
             >
+              <ShieldCheck className="h-4 w-4 mr-2" />
               Approve
             </Button>
           </DialogFooter>

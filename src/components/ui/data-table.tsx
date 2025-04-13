@@ -225,7 +225,7 @@ export function DataTable<TData, TValue>({
                 table.getColumn(column.id)?.setFilterValue(value === "all" ? "" : value)
               }}
             >
-              <SelectTrigger className={column.width || "w-[150px]"}>
+              <SelectTrigger className={column.width || "w-[120px]"}>
                 <SelectValue placeholder={`Filter by ${column.title}`} />
               </SelectTrigger>
               <SelectContent>

@@ -11,6 +11,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { showToast } from "@/lib/utils/toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { Smile, Meh, Frown, ThumbsUp, ThumbsDown } from "lucide-react"
 
 type Question = {
   id: string
@@ -249,10 +251,14 @@ export default function SurveyDetailPage() {
   // Get sentiment icon
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      case 'POSITIVE': return '😀'
-      case 'NEGATIVE': return '😞'
-      case 'NEUTRAL': return '😐'
-      default: return '❓'
+      // case 'POSITIVE': return '😀'
+      // case 'NEGATIVE': return '😞'
+      // case 'NEUTRAL': return '😐'
+      // default: return '❓'
+      case 'POSITIVE': return <ThumbsUp className="h-4 w-4 mr-1" />
+      case 'NEGATIVE': return <ThumbsDown className="h-4 w-4 mr-1" />
+      case 'NEUTRAL': return <Meh className="h-4 w-4 mr-1" />
+      default: return null
     }
   }
 
