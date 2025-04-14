@@ -14,7 +14,7 @@ type Survey = {
   id: string
   title: string
   description: string | null
-  type: "text" | "rating"
+  type: "Text" | "Rating"
   status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string
   end_date: string
@@ -142,8 +142,8 @@ export default function FeedbackPage() {
       id: "type",
       title: "Type",
       options: [
-        { label: "Text", value: "text" },
-        { label: "Rating", value: "rating" },
+        { label: "Text", value: "Text" },
+        { label: "Rating", value: "Rating" },
       ],
     },
   ]
@@ -193,7 +193,7 @@ export default function FeedbackPage() {
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold">Surveys & Feedback</h1>
+        <h1 className="text-3xl font-bold">Surveys</h1>
         <div className="flex space-x-2">
           <Button 
             variant="outline" 

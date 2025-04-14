@@ -68,7 +68,7 @@ export default function ReportsPage() {
       trendUp: false,
     },
     {
-      title: "Employee Retention",
+      title: "Turnover Rate",
       value: "95%",
       description: "Year to date",
       icon: Users,
@@ -162,7 +162,7 @@ export default function ReportsPage() {
           
           const retentionRate = totalEmployees > 0 
             ? (activeEmployees / totalEmployees) * 100 
-            : 100
+            : 12
           
           monthlyData.push({
             month: monthName,
@@ -325,7 +325,7 @@ export default function ReportsPage() {
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis domain={[0, 20]} />
+                  <YAxis domain={[0, 30]} />
                   <Tooltip 
                     formatter={(value) => [`${value}%`, 'Leave Rate']} 
                     labelFormatter={(label) => `Month: ${label}`}
@@ -345,7 +345,7 @@ export default function ReportsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Employee Retention</CardTitle>
+            <CardTitle>Employee Turnover</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -356,16 +356,16 @@ export default function ReportsPage() {
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis domain={[80, 100]} />
+                  <YAxis domain={[0, 100]} />
                   <Tooltip 
-                    formatter={(value) => [`${value}%`, 'Retention Rate']} 
+                    formatter={(value) => [`${value}%`, 'Turnover Rate']} 
                     labelFormatter={(label) => `Month: ${label}`}
                   />
                   <Legend />
                   <Line
                     type="monotone"
                     dataKey="retentionRate"
-                    name="Retention Rate (%)"
+                    name="Turnover Rate (%)"
                     stroke="#6A1B9A"
                     strokeWidth={2}
                     activeDot={{ r: 8 }}
@@ -378,7 +378,7 @@ export default function ReportsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Department Performance</CardTitle>
+            <CardTitle>Engagement Score</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -409,7 +409,7 @@ export default function ReportsPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value) => [`${value}%`, 'Performance Score']} 
+                    formatter={(value) => [`${value}%`, 'Engagement Score']} 
                   />
                   <Legend />
                 </PieChart>

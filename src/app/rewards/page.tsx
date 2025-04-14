@@ -200,17 +200,17 @@ export default function RewardsPage() {
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Rewards Catalog</h1>
-        </div>
-        <Button className="-mr-100" onClick={() => router.push('/rewards/redemptions')}>
+        <h1 className="text-3xl font-bold">Rewards</h1>        
+        <div className="flex space-x-2">
+          <Button onClick={() => router.push('/rewards/redemptions')}>
             <Package className="mr-2 h-4 w-4" />
             View Redemptions
           </Button>
-        <Button onClick={() => router.push('/rewards/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Reward
-        </Button>
+          <Button onClick={() => router.push('/rewards/create')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Reward
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
@@ -232,20 +232,6 @@ export default function RewardsPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Total Redemptions</p>
-                <p className="text-2xl font-bold">{totalRedemptions}</p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Package className="h-6 w-6 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm font-medium">Active Rewards</p>
                 <p className="text-2xl font-bold">
                   {rewards.filter(r => r.is_active).length}
@@ -257,6 +243,20 @@ export default function RewardsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Total Redemptions</p>
+                <p className="text-2xl font-bold">{totalRedemptions}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Package className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>       
       </div>
 
       <DataTable 

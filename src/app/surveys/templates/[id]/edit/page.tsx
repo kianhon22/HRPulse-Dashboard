@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
-type QuestionType = "text" | "rating"
+type QuestionType = "Text" | "Rating"
 
 interface Question {
   id: string
@@ -95,7 +95,7 @@ export default function EditTemplatePage() {
   
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [surveyType, setSurveyType] = useState<QuestionType>("text")
+  const [surveyType, setSurveyType] = useState<QuestionType>("Text")
   const [questions, setQuestions] = useState<Question[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -383,8 +383,8 @@ export default function EditTemplatePage() {
                   <SelectValue placeholder="Select survey type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="rating">Likert Rating</SelectItem>
+                  <SelectItem value="Text">Text</SelectItem>
+                  <SelectItem value="Rating">Likert Rating</SelectItem>
                 </SelectContent>
               </Select>
             </div>

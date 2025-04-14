@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { Trophy, Filter, ThumbsUp, ShieldCheck, ShieldX, Medal } from "lucide-react"
+import { Trophy, Download, ThumbsUp, ShieldCheck, ShieldX, Medal } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
@@ -12,6 +12,7 @@ import { format } from "date-fns"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { exportToCSV } from "@/lib/utils/csv-export"
 import {
   Dialog,
   DialogContent,
@@ -135,6 +136,9 @@ export default function RecognitionsPage() {
       // Get top performer
       if (sortedUsers.length > 0) {
         setTopPerformer(sortedUsers[0])
+      }
+      else {
+        setTopPerformer(null)
       }
       
       // Calculate total points awarded in this period
@@ -425,13 +429,17 @@ export default function RecognitionsPage() {
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Recognitions</h1>
+        <h1 className="text-3xl font-bold">Recognitions</h1>
+        <div className="flex space-x-2">
+          <Button onClick={() => exportToCSV(columns, recognitions, "Employee Recognitions")}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button onClick={() => setLeaderboardDialog(true)}>
+            <Medal className="mr-2 h-4 w-4" />
+            Leaderboard
+          </Button>
         </div>
-        <Button onClick={() => setLeaderboardDialog(true)}>
-          <Medal className="mr-2 h-4 w-4" />
-          Leaderboard
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

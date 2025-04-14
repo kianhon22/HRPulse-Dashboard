@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import { supabase } from "@/lib/supabase"
-import { ArrowLeft, PencilLine, ChevronDown, ChevronUp } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { showToast } from "@/lib/utils/toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Smile, Meh, Frown, ThumbsUp, ThumbsDown } from "lucide-react"
+import { exportToCSV } from "@/lib/utils/csv-export"
+import { ArrowLeft, PencilLine, ChevronDown, ChevronUp, Smile, Meh, Frown, ThumbsUp, ThumbsDown, Download } from "lucide-react"
 
 type Question = {
   id: string
@@ -28,14 +28,7 @@ type Response = {
   question_id: string
   user_id: string
   response: any
-  sentiment?: {
-    top_label: string
-    confidence: number
-    all_scores: {
-      label: string
-      score: number
-    }[]
-  }
+  sentiment?: any
   created_at: string
   user_name: string
 }
@@ -44,7 +37,7 @@ type Survey = {
   id: string
   title: string
   description: string | null
-  type: "text" | "rating"
+  type: "Text" | "Rating"
   status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string
   end_date: string
@@ -162,11 +155,11 @@ export default function SurveyDetailPage() {
 
   const getRatingLabel = (rating: number) => {
     switch (rating) {
-      case 1: return 'Extremely Disagree'
-      case 2: return 'Disagree'
+      case 1: return 'Very Negative'
+      case 2: return 'Negative'
       case 3: return 'Neutral'
-      case 4: return 'Agree'
-      case 5: return 'Extremely Agree'
+      case 4: return 'Positive'
+      case 5: return 'Very Positive'
       default: return 'Unknown'
     }
   }
@@ -212,16 +205,32 @@ export default function SurveyDetailPage() {
   const getSentimentSummary = (questionId: string) => {
     const questionResponses = getResponsesForQuestion(questionId)
     const sentiments = {
+      VERY_POSITIVE: 0,
       POSITIVE: 0,
-      NEGATIVE: 0,
       NEUTRAL: 0,
+      NEGATIVE: 0,
+      VERY_NEGATIVE: 0,
       total: 0
     }
     
     questionResponses.forEach(response => {
-      if (response.sentiment?.top_label) {
-        sentiments[response.sentiment.top_label as keyof typeof sentiments]++
-        sentiments.total++
+      if (response.sentiment[0] && response.sentiment[0].length > 0) {
+        // Get the first sentiment label from the scores array
+        const label = response.sentiment[0][0].label;
+        
+        // Map the numeric label to sentiment categories
+        let sentimentKey;
+        switch(label) {
+          case 1: sentimentKey = 'VERY_NEGATIVE'; break;
+          case 2: sentimentKey = 'NEGATIVE'; break;
+          case 3: sentimentKey = 'NEUTRAL'; break;
+          case 4: sentimentKey = 'POSITIVE'; break;
+          case 5: sentimentKey = 'VERY_POSITIVE'; break;
+          default: return; // Skip if not a valid label
+        }
+        
+        sentiments[sentimentKey as keyof typeof sentiments]++;
+        sentiments.total++;
       }
     })
     
@@ -231,9 +240,11 @@ export default function SurveyDetailPage() {
   // Get sentiment color
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
+      case 'VERY_POSITIVE': return 'text-green-700'
       case 'POSITIVE': return 'text-green-600'
-      case 'NEGATIVE': return 'text-red-600'
       case 'NEUTRAL': return 'text-yellow-600'
+      case 'NEGATIVE': return 'text-red-600'
+      case 'VERY_NEGATIVE': return 'text-red-700'
       default: return 'text-gray-600'
     }
   }
@@ -241,9 +252,11 @@ export default function SurveyDetailPage() {
   // Get sentiment background color
   const getSentimentBgColor = (sentiment: string) => {
     switch (sentiment) {
+      case 'VERY_POSITIVE': return 'bg-green-200'
       case 'POSITIVE': return 'bg-green-100'
-      case 'NEGATIVE': return 'bg-red-100'
       case 'NEUTRAL': return 'bg-yellow-100'
+      case 'NEGATIVE': return 'bg-red-100'
+      case 'VERY_NEGATIVE': return 'bg-red-200'
       default: return 'bg-gray-100'
     }
   }
@@ -251,13 +264,11 @@ export default function SurveyDetailPage() {
   // Get sentiment icon
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      // case 'POSITIVE': return '😀'
-      // case 'NEGATIVE': return '😞'
-      // case 'NEUTRAL': return '😐'
-      // default: return '❓'
-      case 'POSITIVE': return <ThumbsUp className="h-4 w-4 mr-1" />
-      case 'NEGATIVE': return <ThumbsDown className="h-4 w-4 mr-1" />
+      case 'VERY_POSITIVE': return <ThumbsUp className="h-4 w-4 mr-1" />
+      case 'POSITIVE': return <Smile className="h-4 w-4 mr-1" />
       case 'NEUTRAL': return <Meh className="h-4 w-4 mr-1" />
+      case 'NEGATIVE': return <Frown className="h-4 w-4 mr-1" />
+      case 'VERY_NEGATIVE': return <ThumbsDown className="h-4 w-4 mr-1" />
       default: return null
     }
   }
@@ -290,9 +301,9 @@ export default function SurveyDetailPage() {
       </div>
     )
   }
-
-  const canViewResponses = survey.status === 'Active' || survey.status === 'Closed'
-
+  const canViewResponses = survey.status === 'Active' || survey.status === 'Closed';
+  const columns:[] = [];
+  
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-8">
@@ -304,13 +315,26 @@ export default function SurveyDetailPage() {
           <h1 className="text-3xl font-bold">{survey.title}</h1>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => router.push(`/surveys/${survey.id}/edit`)}
-          >
-            <PencilLine className="mr-2 h-4 w-4" />
-            Edit Survey
+          <Button onClick={() => exportToCSV(columns, responses, "Reward Redemptions")}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
           </Button>
+          <div
+            title={
+              survey.status === 'Active' || survey.status === 'Closed'
+                ? `You cannot edit an ${survey.status.toLowerCase()} survey`
+                : ''
+            }
+          >
+            <Button 
+              variant="outline" 
+              onClick={() => router.push(`/surveys/${survey.id}/edit`)}
+              disabled={survey.status === 'Active' || survey.status === 'Closed'}
+            >
+              <PencilLine className="mr-2 h-4 w-4" />
+              Edit Survey
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -386,16 +410,16 @@ export default function SurveyDetailPage() {
                         return (
                           <Card key={question.id} className="overflow-hidden">
                             <CardHeader className="bg-muted/50">
-                              <CardTitle className="text-base">{question.question}</CardTitle>
+                              <CardTitle className="-my-3 text-base">{question.question}</CardTitle>
                             </CardHeader>
-                            <CardContent className="pt-4">
+                            <CardContent>
                               {!canViewResponses ? (
                                 <p className="text-sm text-muted-foreground">
                                   Responses will be visible once the survey is Active or Closed.
                                 </p>
                               ) : questionResponses.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No responses yet for this question.</p>
-                              ) : survey.type === "rating" ? (
+                              ) : survey.type === "Rating" ? (
                                 // Display rating summary
                                 <div className="space-y-4">
                                   {getRatingCounts(question.id).map((count, idx) => {
@@ -423,10 +447,9 @@ export default function SurveyDetailPage() {
                                 // Display text responses with sentiment analysis
                                 <div className="space-y-4">
                                   {/* Sentiment analysis summary */}
-                                  <div className="mb-6 pb-4 border-b">
-                                    <h4 className="text-sm font-medium mb-3">Sentiment Analysis</h4>
-                                    <div className="grid grid-cols-3 gap-3">
-                                      {['POSITIVE', 'NEUTRAL', 'NEGATIVE'].map(sentiment => {
+                                  <div className="pb-4 border-b">
+                                    <div className="grid grid-cols-5 gap-2">
+                                      {['VERY_POSITIVE', 'POSITIVE', 'NEUTRAL', 'NEGATIVE', 'VERY_NEGATIVE'].map(sentiment => {
                                         const sentiments = getSentimentSummary(question.id)
                                         const count = sentiments[sentiment as keyof typeof sentiments]
                                         const percentage = sentiments.total > 0 
@@ -436,13 +459,13 @@ export default function SurveyDetailPage() {
                                         return (
                                           <div 
                                             key={sentiment} 
-                                            className={`rounded-lg p-3 ${getSentimentBgColor(sentiment)}`}
+                                            className={`rounded-lg p-2 ${getSentimentBgColor(sentiment)}`}
                                           >
                                             <div className="flex justify-between items-center mb-1">
-                                              <span className={`text-sm font-medium ${getSentimentColor(sentiment)}`}>
-                                                {getSentimentIcon(sentiment)} {sentiment.charAt(0) + sentiment.slice(1).toLowerCase()}
+                                              <span className={`text-xs font-medium ${getSentimentColor(sentiment)}`}>
+                                                {getSentimentIcon(sentiment)} {sentiment.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
                                               </span>
-                                              <span className="text-sm font-bold">
+                                              <span className="text-xs font-bold">
                                                 {percentage}%
                                               </span>
                                             </div>
@@ -460,20 +483,35 @@ export default function SurveyDetailPage() {
                                   </div>
                                   
                                   {/* Individual responses */}
-                                  <h4 className="text-sm font-medium mb-2">Individual Responses</h4>
+                                  <h4 className="text-sm font-medium -mt-2 mb-2">Individual Responses</h4>
                                   <div className="space-y-2">
                                     {questionResponses.map(response => {
-                                      const sentiment = response.sentiment?.top_label || 'UNKNOWN'
-                                      const confidence = response.sentiment?.confidence
-                                        ? Math.round(response.sentiment.confidence * 100)
-                                        : null
+                                      // Derive sentiment from the all_scores array
+                                      let sentimentLabel = 'UNKNOWN';
+                                      let confidence = null;
+                                      
+                                      if (response.sentiment[0] && response.sentiment[0].length > 0) {
+                                        const label = response.sentiment[0][0].label;
+                                        const score = response.sentiment[0][0].score;
+                                        confidence = Math.round(score * 100);
+                                        
+                                        // Map the numeric label to sentiment categories
+                                        switch(label) {
+                                          case 1: sentimentLabel = 'VERY_NEGATIVE'; break;
+                                          case 2: sentimentLabel = 'NEGATIVE'; break;
+                                          case 3: sentimentLabel = 'NEUTRAL'; break;
+                                          case 4: sentimentLabel = 'POSITIVE'; break;
+                                          case 5: sentimentLabel = 'VERY_POSITIVE'; break;
+                                          default: sentimentLabel = 'UNKNOWN';
+                                        }
+                                      }
                                         
                                       return (
                                         <div key={response.id} className="border rounded-md overflow-hidden">
                                           {/* Sentiment badge */}
-                                          {sentiment !== 'UNKNOWN' && (
-                                            <div className={`px-3 py-1 text-xs font-medium ${getSentimentBgColor(sentiment)}`}>
-                                              {getSentimentIcon(sentiment)} {sentiment.charAt(0) + sentiment.slice(1).toLowerCase()}
+                                          {sentimentLabel !== 'UNKNOWN' && (
+                                            <div className={`px-3 py-1 text-xs font-medium ${getSentimentBgColor(sentimentLabel)}`}>
+                                              {getSentimentIcon(sentimentLabel)} {sentimentLabel.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
                                               {confidence !== null && ` (${confidence}% confidence)`}
                                             </div>
                                           )}

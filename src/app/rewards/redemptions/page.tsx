@@ -14,13 +14,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ColumnDef } from "@tanstack/react-table"
+import { exportToCSV } from "@/lib/utils/csv-export"
 import { supabase } from "@/lib/supabase"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { showToast } from "@/lib/utils/toast"
 import { Input } from "@/components/ui/input"
 import { 
-  Eye, 
+  ArrowLeft,
+  Eye,
+  Download,
   Package, 
   Check, 
   Clock, 
@@ -319,15 +322,16 @@ export default function RedemptionsPage() {
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Reward Redemptions</h1>
-          <p className="text-muted-foreground">
-            Manage and track employee reward redemption requests
-          </p>
+        <h1 className="text-3xl font-bold">Reward Redemptions</h1>
+        <div className="flex space-x-2">
+          <Button onClick={() => exportToCSV(columns, redemptions, "Reward Redemptions")}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/rewards')}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
         </div>
-        <Button variant="outline" onClick={() => router.push('/rewards')}>
-          Back to Rewards
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

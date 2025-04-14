@@ -14,7 +14,7 @@ type SurveyTemplate = {
   id: string
   title: string
   description: string | null
-  type: "text" | "rating"
+  type: "Text" | "Rating"
   created_at: string
   updated_at: string
 }

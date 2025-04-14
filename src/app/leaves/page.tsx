@@ -9,6 +9,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
 import { LeaveDetailDialog } from "@/components/leave/leave-detail-dialog"
+import { exportToCSV } from "@/lib/utils/csv-export"
 
 // Define the type for our data
 type Leave = {
@@ -205,9 +206,9 @@ export default function LeavePage() {
   return (
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold">Leave Management</h1>
+        <h1 className="text-3xl font-bold">Leaves</h1>
         <div className="flex space-x-4">
-          <Button>
+          <Button onClick={() => exportToCSV(columns, data, "leaves")}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>

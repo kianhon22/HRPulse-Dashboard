@@ -124,8 +124,7 @@ export default function CreateRewardPage() {
     <div className="py-8 pr-8">
       <div className="flex items-center mb-8">
         <Button variant="ghost" onClick={() => router.back()} className="mr-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
         <h1 className="text-3xl font-bold">Create New Reward</h1>
       </div>

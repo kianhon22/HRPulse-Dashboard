@@ -55,7 +55,7 @@ export default function DashboardPage() {
   return (
     <div className="py-8 pr-8">
       <div>
-        <h1 className="text-3xl font-bold mb-4">Dashboard Overview</h1>
+        <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
         {/* <p className="text-muted-foreground">
           Welcome to your HR management dashboard
         </p> */}
@@ -80,8 +80,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Toast demo */}
-      <div className="mt-8">
+      {/* Toast Demo */}
+      {/* <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Toast Notifications</h2>
         <div className="flex flex-wrap gap-4">
           <ToastDemo />
@@ -90,11 +90,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Toast Utility demo */}
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Toast Utility Demo</h2>
         <ToastUtilDemo />
-      </div>
+      </div> */}
 
       {/* Add charts and other components here */}
     </div>

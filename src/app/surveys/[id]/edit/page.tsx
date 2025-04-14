@@ -30,7 +30,7 @@ type Survey = {
   id: string
   title: string
   description: string | null
-  type: "text" | "rating"
+  type: "Text" | "Rating"
   status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string | null
   end_date: string | null
@@ -109,7 +109,7 @@ export default function EditSurveyPage() {
     id: surveyId,
     title: "",
     description: "",
-    type: "text",
+    type: "Text",
     status: "Draft",
     start_date: null,
     end_date: null,
@@ -213,7 +213,7 @@ export default function EditSurveyPage() {
     }))
   }
   
-  const handleTypeChange = (value: "text" | "rating") => {
+  const handleTypeChange = (value: "Text" | "Rating") => {
     setSurvey(prev => ({
       ...prev,
       type: value
@@ -447,8 +447,8 @@ export default function EditSurveyPage() {
                     <SelectValue placeholder="Select survey type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="text">Text</SelectItem>
-                    <SelectItem value="rating">Rating (1-5)</SelectItem>
+                    <SelectItem value="Text">Text</SelectItem>
+                    <SelectItem value="Rating">Rating (1-5)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
