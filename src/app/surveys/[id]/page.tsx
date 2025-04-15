@@ -214,9 +214,9 @@ export default function SurveyDetailPage() {
     }
     
     questionResponses.forEach(response => {
-      if (response.sentiment[0] && response.sentiment[0].length > 0) {
+      if (response.sentiment && response.sentiment.length > 0) {
         // Get the first sentiment label from the scores array
-        const label = response.sentiment[0][0].label;
+        const label = response.sentiment[0].label;
         
         // Map the numeric label to sentiment categories
         let sentimentKey;
@@ -352,11 +352,11 @@ export default function SurveyDetailPage() {
             )}
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
+            <div className="grid grid-cols-2 gap-4">
+              {/* <div>
                 <h3 className="text-sm font-medium text-gray-500">Survey Type</h3>
                 <p className="capitalize">{survey.type}</p>
-              </div>
+              </div> */}
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Start Date</h3>
                 <p>{survey.start_date ? format(new Date(survey.start_date), "MMMM d, yyyy") : "Not specified"}</p>
@@ -490,9 +490,9 @@ export default function SurveyDetailPage() {
                                       let sentimentLabel = 'UNKNOWN';
                                       let confidence = null;
                                       
-                                      if (response.sentiment[0] && response.sentiment[0].length > 0) {
-                                        const label = response.sentiment[0][0].label;
-                                        const score = response.sentiment[0][0].score;
+                                      if (response.sentiment && response.sentiment.length > 0) {
+                                        const label = response.sentiment[0].label;
+                                        const score = response.sentiment[0].score;
                                         confidence = Math.round(score * 100);
                                         
                                         // Map the numeric label to sentiment categories

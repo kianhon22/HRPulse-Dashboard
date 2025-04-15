@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
-type QuestionType = "Text" | "Rating"
+// type QuestionType = "Text" | "Rating"
 
 interface Question {
   id: string
@@ -92,7 +92,7 @@ export default function CreateTemplatePage() {
   const router = useRouter()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [surveyType, setSurveyType] = useState<QuestionType>("Text")
+  // const [surveyType, setSurveyType] = useState<QuestionType>("Text")
   const [questions, setQuestions] = useState<Question[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("Workload & Balance")
@@ -180,7 +180,7 @@ export default function CreateTemplatePage() {
         .insert({
           title,
           description: description || null,
-          type: surveyType,
+          type: "Text",
           status: "Draft", // Templates are always in draft
           is_template: true // This is a template
         })
@@ -257,7 +257,7 @@ export default function CreateTemplatePage() {
                 className="mt-1"
               />
             </div>
-            <div>
+            {/* <div>
               <Label htmlFor="surveyType">Survey Type</Label>
               <Select value={surveyType} onValueChange={(value: QuestionType) => setSurveyType(value)}>
                 <SelectTrigger id="surveyType" className="mt-1">
@@ -268,7 +268,7 @@ export default function CreateTemplatePage() {
                   <SelectItem value="Rating">Likert Rating</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 

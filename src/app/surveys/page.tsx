@@ -14,7 +14,7 @@ type Survey = {
   id: string
   title: string
   description: string | null
-  type: "Text" | "Rating"
+  // type: "Text" | "Rating"
   status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string
   end_date: string
@@ -43,18 +43,18 @@ export default function FeedbackPage() {
         ) : "-"
       },
     },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => {
-        const type = row.getValue("type") as string
-        return (
-          <div className="capitalize font-medium">
-            {type}
-          </div>
-        )
-      },
-    },
+    // {
+    //   accessorKey: "type",
+    //   header: "Type",
+    //   cell: ({ row }) => {
+    //     const type = row.getValue("type") as string
+    //     return (
+    //       <div className="capitalize font-medium">
+    //         {type}
+    //       </div>
+    //     )
+    //   },
+    // },
     {
       accessorKey: "status",
       header: "Status",
@@ -138,14 +138,14 @@ export default function FeedbackPage() {
         { label: "Deleted", value: "Deleted" },
       ],
     },
-    {
-      id: "type",
-      title: "Type",
-      options: [
-        { label: "Text", value: "Text" },
-        { label: "Rating", value: "Rating" },
-      ],
-    },
+    // {
+    //   id: "type",
+    //   title: "Type",
+    //   options: [
+    //     { label: "Text", value: "Text" },
+    //     { label: "Rating", value: "Rating" },
+    //   ],
+    // },
   ]
 
   const fetchSurveys = async (year: string) => {
@@ -161,6 +161,7 @@ export default function FeedbackPage() {
         .from('surveys')
         .select()
         .eq('is_template', false) // Exclude templates
+        .eq('type', 'Text')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .order('created_at', { ascending: false })

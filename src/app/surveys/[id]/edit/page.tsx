@@ -30,7 +30,7 @@ type Survey = {
   id: string
   title: string
   description: string | null
-  type: "Text" | "Rating"
+  // type: "Text" | "Rating"
   status: "Draft" | "Scheduled" | "Active" | "Closed" | "Deleted"
   start_date: string | null
   end_date: string | null
@@ -109,7 +109,7 @@ export default function EditSurveyPage() {
     id: surveyId,
     title: "",
     description: "",
-    type: "Text",
+    // type: "Text",
     status: "Draft",
     start_date: null,
     end_date: null,
@@ -303,7 +303,7 @@ export default function EditSurveyPage() {
         .update({
           title: survey.title,
           description: survey.description,
-          type: survey.type,
+          type: "Text",
           status: survey.status,
           start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
           end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
@@ -437,7 +437,7 @@ export default function EditSurveyPage() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="type">Survey Type</Label>
                 <Select
                   value={survey.type}
@@ -451,7 +451,7 @@ export default function EditSurveyPage() {
                     <SelectItem value="Rating">Rating (1-5)</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
               
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>

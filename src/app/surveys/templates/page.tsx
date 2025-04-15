@@ -14,7 +14,7 @@ type SurveyTemplate = {
   id: string
   title: string
   description: string | null
-  type: "Text" | "Rating"
+  // type: "Text" | "Rating"
   created_at: string
   updated_at: string
 }
@@ -166,7 +166,7 @@ export default function TemplatesPage() {
                     >
                       <div className="font-medium">{template.title}</div>
                       <div className="flex justify-between text-sm text-gray-500">
-                        <span className="capitalize">{template.type}</span>
+                        {/* <span className="capitalize">{template.type}</span> */}
                         <span>
                           {format(new Date(template.created_at), "MMM dd, yyyy")}
                         </span>
@@ -210,10 +210,10 @@ export default function TemplatesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div>
+                    {/* <div>
                       <h3 className="text-sm font-medium text-gray-500">Template Type</h3>
                       <p className="capitalize">{activeTemplate.type}</p>
-                    </div>
+                    </div> */}
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Created</h3>
                       <p>{format(new Date(activeTemplate.created_at), "MMMM d, yyyy")}</p>

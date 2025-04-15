@@ -22,7 +22,7 @@ import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
-type QuestionType = "Text" | "Rating"
+// type QuestionType = "Text" | "Rating"
 
 interface Question {
   id: string
@@ -102,7 +102,7 @@ export default function CreateSurveyPage() {
   
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [surveyType, setSurveyType] = useState<QuestionType>("Text")
+  // const [surveyType, setSurveyType] = useState<QuestionType>("Text")
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -143,7 +143,7 @@ export default function CreateSurveyPage() {
           if (templateData) {
             setTitle(`${templateData.title}`)
             setDescription(templateData.description || "")
-            setSurveyType(templateData.type as QuestionType)
+            // setSurveyType(templateData.type as QuestionType)
           }
           
           // Fetch template questions
@@ -264,7 +264,7 @@ export default function CreateSurveyPage() {
         .insert({
           title,
           description: description || null,
-          type: surveyType,
+          type: "Text",
           status: "Draft",
           start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
           end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
@@ -362,7 +362,7 @@ export default function CreateSurveyPage() {
                 className="mt-1"
               />
             </div>
-            <div>
+            {/* <div>
               <Label htmlFor="surveyType">Survey Type</Label>
               <Select value={surveyType} onValueChange={(value: QuestionType) => setSurveyType(value)}>
                 <SelectTrigger id="surveyType" className="mt-1">
@@ -373,7 +373,7 @@ export default function CreateSurveyPage() {
                   <SelectItem value="Rating">Likert Rating</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Start Date</Label>

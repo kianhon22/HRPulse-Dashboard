@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
-type QuestionType = "Text" | "Rating"
+// type QuestionType = "Text" | "Rating"
 
 interface Question {
   id: string
@@ -95,7 +95,7 @@ export default function EditTemplatePage() {
   
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [surveyType, setSurveyType] = useState<QuestionType>("Text")
+  // const [surveyType, setSurveyType] = useState<QuestionType>("Text")
   const [questions, setQuestions] = useState<Question[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -133,7 +133,7 @@ export default function EditTemplatePage() {
         if (templateData) {
           setTitle(templateData.title)
           setDescription(templateData.description || "")
-          setSurveyType(templateData.type as QuestionType)
+          // setSurveyType(templateData.type as QuestionType)
         }
         
         // Fetch template questions
@@ -249,7 +249,7 @@ export default function EditTemplatePage() {
         .update({
           title,
           description: description || null,
-          type: surveyType,
+          type: 'Text',
           updated_at: new Date().toISOString()
         })
         .eq('id', templateId)
@@ -376,7 +376,7 @@ export default function EditTemplatePage() {
                 className="mt-1"
               />
             </div>
-            <div>
+            {/* <div>
               <Label htmlFor="surveyType">Survey Type</Label>
               <Select value={surveyType} onValueChange={(value: QuestionType) => setSurveyType(value)}>
                 <SelectTrigger id="surveyType" className="mt-1">
@@ -387,7 +387,7 @@ export default function EditTemplatePage() {
                   <SelectItem value="Rating">Likert Rating</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
