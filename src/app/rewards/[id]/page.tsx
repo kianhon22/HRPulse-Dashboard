@@ -13,6 +13,7 @@ import { format, parseISO } from "date-fns"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
 import { ColumnDef } from "@tanstack/react-table"
+import { titleCase } from "@/lib/utils/formatText"
 import { 
   ArrowLeft, 
   Gift, 
@@ -112,12 +113,12 @@ export default function RewardDetailPage() {
         id: item.id,
         user_id: item.user_id,
         created_at: item.created_at,
-        status: item.status || 'pending',
+        status: item.status,
         quantity: item.quantity || 1,
         total_points: (item.quantity || 1) * (rewardData?.points || 0),
         notes: item.notes,
-        user_name: item.profiles?.name || 'Unknown',
-        user_email: item.profiles?.email || '',
+        user_name: item.users?.name || 'Unknown',
+        user_email: item.users?.email || '',
       }))
 
       // Set the reward data with redemption count
@@ -137,29 +138,17 @@ export default function RewardDetailPage() {
 
   const getStatusDetails = (status: string) => {
     switch (status) {
-      case "pending":
+      case "Pending":
         return {
           label: "Pending",
           color: "bg-yellow-100 text-yellow-800 border-yellow-200",
           icon: <Clock className="h-3 w-3 mr-1" />
         }
-      case "approved":
+      case "Completed":
         return {
-          label: "Approved",
-          color: "bg-blue-100 text-blue-800 border-blue-200",
-          icon: <CheckCircle2 className="h-3 w-3 mr-1" />
-        }
-      case "fulfilled":
-        return {
-          label: "Fulfilled",
+          label: "Completed",
           color: "bg-green-100 text-green-800 border-green-200",
-          icon: <Package className="h-3 w-3 mr-1" />
-        }
-      case "rejected":
-        return {
-          label: "Rejected",
-          color: "bg-red-100 text-red-800 border-red-200",
-          icon: <X className="h-3 w-3 mr-1" />
+          icon: <CheckCircle2 className="h-3 w-3 mr-1" />
         }
       default:
         return {
@@ -284,10 +273,7 @@ export default function RewardDetailPage() {
             Back to Rewards
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{reward.title}</h1>
-            <p className="text-muted-foreground">
-              Reward details and redemption history
-            </p>
+            <h1 className="text-3xl font-bold">{titleCase(reward.title)}</h1>
           </div>
         </div>
         <div>
@@ -300,7 +286,7 @@ export default function RewardDetailPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="redemptions">
+          <TabsTrigger  className="ml-1" value="redemptions">
             Redemptions 
             <span className="ml-2 bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
               {redemptions.length}
@@ -317,7 +303,7 @@ export default function RewardDetailPage() {
                     {reward.image_url ? (
                       <img 
                         src={reward.image_url} 
-                        alt={reward.title} 
+                        alt={titleCase(reward.title)} 
                         className="object-cover w-full h-full" 
                       />
                     ) : (

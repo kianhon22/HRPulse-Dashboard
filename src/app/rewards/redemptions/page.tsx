@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/data-table"
+import { titleCase } from "@/lib/utils/formatText"
 import {
   Dialog,
   DialogContent,
@@ -96,7 +97,7 @@ export default function RedemptionsPage() {
         points_spent: item.points_spent ?? 0,
         user_name: item.users?.name || 'Unknown',
         user_email: item.users?.email || '',
-        reward_title: item.rewards?.title || 'Unknown Reward',
+        reward_title: titleCase(item.rewards?.title || 'Unknown Reward'),
         reward_points: item.rewards?.points || 0,
         image_url: item.rewards?.image_url
       }))
@@ -204,7 +205,7 @@ export default function RedemptionsPage() {
             {imageUrl ? (
               <img 
                 src={imageUrl} 
-                alt={redemption.reward_title} 
+                alt={titleCase(redemption.reward_title)} 
                 className="h-10 w-10 rounded-md object-cover" 
               />
             ) : (
@@ -212,7 +213,7 @@ export default function RedemptionsPage() {
                 <Gift className="h-5 w-5 text-primary" />
               </div>
             )}
-            <div className="font-medium">{redemption.reward_title}</div>
+            <div className="font-medium">{titleCase(redemption.reward_title)}</div>
           </div>
         )
       }
@@ -406,7 +407,7 @@ export default function RedemptionsPage() {
                   {selectedRedemption.image_url ? (
                     <img 
                       src={selectedRedemption.image_url} 
-                      alt={selectedRedemption.reward_title} 
+                      alt={titleCase(selectedRedemption.reward_title)} 
                       className="object-cover w-full h-full" 
                     />
                   ) : (
@@ -414,7 +415,7 @@ export default function RedemptionsPage() {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{selectedRedemption.reward_title}</h3>
+                  <h3 className="font-semibold text-lg">{titleCase(selectedRedemption.reward_title)}</h3>
                   <div className="flex items-center mt-1">
                     <Gift className="mr-2 h-4 w-4 text-yellow-600" />
                     <span className="font-medium">{selectedRedemption.reward_points} points</span>
@@ -507,7 +508,7 @@ export default function RedemptionsPage() {
                   <Gift className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">{selectedRedemption.reward_title}</p>
+                  <p className="font-medium">{titleCase(selectedRedemption.reward_title)}</p>
                   <p className="text-sm text-muted-foreground">Requested by {selectedRedemption.user_name}</p>
                 </div>
               </div>

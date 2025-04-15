@@ -9,6 +9,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
+import { titleCase } from "@/lib/utils/formatText"
 import { showToast } from "@/lib/utils/toast"
 import {
   Dialog,
@@ -113,7 +114,7 @@ export default function RewardsPage() {
             {imageUrl ? (
               <img 
                 src={imageUrl} 
-                alt={reward.title} 
+                alt={titleCase(reward.title)} 
                 className="h-10 w-10 rounded-md object-cover" 
               />
             ) : (
@@ -122,7 +123,7 @@ export default function RewardsPage() {
               </div>
             )}
             <div>
-              <div className="font-medium">{reward.title}</div>
+              <div className="font-medium">{titleCase(reward.title)}</div>
               <div className="text-sm text-muted-foreground line-clamp-1">
                 {reward.description}
               </div>
@@ -281,19 +282,19 @@ export default function RewardsPage() {
           {selectedReward && (
             <div className="space-y-4">
               <div className="flex flex-col gap-4">
-                <div className="w-full h-40 rounded-md overflow-hidden flex items-center justify-center bg-gray-100">
+                <div className="w-full h-50 rounded-md overflow-hidden flex items-center justify-center bg-gray-100">
                   {selectedReward.image_url ? (
                     <img 
                       src={selectedReward.image_url} 
-                      alt={selectedReward.title} 
-                      className="object-cover w-full h-full" 
+                      alt={titleCase(selectedReward.title)} 
+                      className="object-cover w-55 h-full" 
                     />
                   ) : (
                     <Gift className="h-16 w-16 text-gray-400" />
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{selectedReward.title}</h3>
+                  <h3 className="font-semibold text-lg">{titleCase(selectedReward.title)}</h3>
                   <p className="text-sm text-gray-600 mt-1">{selectedReward.description}</p>
                 </div>
               </div>

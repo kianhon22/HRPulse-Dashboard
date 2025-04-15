@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
-import { ArrowLeft, PencilLine, Mail, Phone, Briefcase, Building, Calendar, User, MonitorCog, Contact } from "lucide-react"
+import { titleCase } from "@/lib/utils/formatText"
+import { ArrowLeft, PencilLine, Mail, Phone, Briefcase, Building, Calendar, User, MonitorCog, Contact, CalendarDays } from "lucide-react"
 
 type Employee = {
   id: string
@@ -22,11 +23,18 @@ type Employee = {
   phone: string | null
   is_active: boolean
   image_url: string | null
+  leave: number | null
+}
+
+type LeaveInfo = {
+  total: number
+  remaining: number
 }
 
 export default function EmployeeDetailPage() {
   const router = useRouter()
   const [employee, setEmployee] = useState<Employee | null>(null)
+  const [leaveInfo, setLeaveInfo] = useState<LeaveInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const employeeId = useParams()?.id as string
 
@@ -45,11 +53,14 @@ export default function EmployeeDetailPage() {
         
         if (error) {
           showToast.error("Error loading employee details")
-          console.error('Erdatafetching employee:', error)
+          console.error('Error fetching employee:', error)
           return
         }
 
         setEmployee(data)
+
+        // Fetch leave information
+        await fetchLeaveInfo(employeeId, data.leave || 0)
       } catch (error) {
         showToast.error("An unexpected error occurred")
         console.error('Error:', error)
@@ -60,6 +71,41 @@ export default function EmployeeDetailPage() {
 
     fetchEmployeeDetails()
   }, [employeeId])
+
+  const fetchLeaveInfo = async (userId: string, totalLeave: number) => {
+    try {
+      // Get the current year
+      const currentYear = new Date().getFullYear()
+      const startDate = `${currentYear}-01-01`
+      const endDate = `${currentYear}-12-31`
+
+      // Fetch approved leaves for the current year
+      const { data, error } = await supabase
+        .from('leaves')
+        .select('period')
+        .eq('user_id', userId)
+        .eq('status', 'Approved')
+        .gte('start_date', startDate)
+        .lte('end_date', endDate)
+      
+      if (error) {
+        console.error('Error fetching leave information:', error)
+        return
+      }
+
+      // Calculate used leave days
+      const usedLeave = data.reduce((total, leave) => {
+        return total + (leave.period || 0)
+      }, 0)
+
+      setLeaveInfo({
+        remaining: totalLeave - usedLeave,
+        total: totalLeave
+      })
+    } catch (error) {
+      console.error('Error calculating leave information:', error)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -153,7 +199,7 @@ export default function EmployeeDetailPage() {
                     <Briefcase className="h-5 w-5 text-gray-500 mr-3" />
                     <div>
                       <p className="text-sm font-medium text-gray-500">Position</p>
-                      <p>{employee.position}</p>
+                      <p>{titleCase(employee.position)}</p>
                     </div>
                   </div>
                   
@@ -164,6 +210,16 @@ export default function EmployeeDetailPage() {
                       <p>{employee.department}</p>
                     </div>
                   </div>
+
+                  {leaveInfo && (
+                    <div className="flex items-center">
+                      <CalendarDays className="h-5 w-5 text-gray-500 mr-3" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Remaining Leave</p>
+                        <p>{leaveInfo.remaining}/{leaveInfo.total} days</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-4">
@@ -198,23 +254,8 @@ export default function EmployeeDetailPage() {
                       <p>{employee.left_company_date ? format(employee.left_company_date, "MMMM d, yyyy") : "-"}</p>
                     </div>
                   </div>
-                  
-                  {/* <div className="flex items-center">
-                    <AtSign className="h-5 w-5 text-gray-500 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Employee ID</p>
-                      <p>{employee.employee_id || "Not assigned"}</p>
-                    </div>
-                  </div> */}
                 </div>
               </div>
-              
-              {/* {employee.address && (
-                <div className="mt-6">
-                  <p className="text-sm font-medium text-gray-500 mb-1">Address</p>
-                  <p>{employee.address}</p>
-                </div>
-              )} */}
             </CardContent>
           </Card>
         </div>
@@ -239,7 +280,7 @@ export default function EmployeeDetailPage() {
                 )}
               </div>
               <h3 className="text-xl font-bold">{employee.name}</h3>
-              <p className="text-gray-500">{employee.position}</p>
+              <p className="text-gray-500">{titleCase(employee.position)}</p>
               <p className="text-gray-500">{employee.department}</p>
             </CardContent>
           </Card>

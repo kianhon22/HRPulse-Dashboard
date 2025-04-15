@@ -24,6 +24,7 @@ type Employee = {
   department: string
   join_company_date: string | null
   password: string
+  leave: number | null
 }
 
 export default function CreateEmployeePage() {
@@ -39,6 +40,7 @@ export default function CreateEmployeePage() {
     department: "",
     join_company_date: null,
     password: "",
+    leave: null
   })
   const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,6 +50,15 @@ export default function CreateEmployeePage() {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }))
+  }
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    const numValue = value === '' ? null : parseInt(value, 10)
+    setFormData(prev => ({
+      ...prev,
+      [name]: numValue
     }))
   }
 
@@ -132,6 +143,7 @@ export default function CreateEmployeePage() {
           position: formData.position,
           department: formData.department,
           join_company_date: formData.join_company_date,
+          leave: formData.leave
         })
         .eq("id", userId)
         .select()
@@ -305,6 +317,19 @@ export default function CreateEmployeePage() {
                 <SingleDatePicker
                   date={joiningDate}
                   onDateChange={handleDateChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="leave">Total Leave Days (Annual)</Label>
+                <Input
+                  id="leave"
+                  name="leave"
+                  type="number"
+                  min="0"
+                  value={formData.leave || ""}
+                  onChange={handleNumberChange}
+                  placeholder="e.g., 15"
+                  className="mt-1"
                 />
               </div>
             </div>

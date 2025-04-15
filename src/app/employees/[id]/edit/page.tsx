@@ -26,6 +26,7 @@ interface Employee {
   phone: string | null
   is_active: boolean
   image_url: string | null
+  leave: number | null
 }
 
 export default function EditEmployeePage() {
@@ -92,6 +93,7 @@ export default function EditEmployeePage() {
           is_active: employee.is_active,
           join_company_date: joinDate?.toISOString() || null,
           left_company_date: leftDate?.toISOString() || null,
+          leave: employee.leave
         })
         .eq('id', employeeId)
       
@@ -118,6 +120,18 @@ export default function EditEmployeePage() {
       return {
         ...prev,
         [name]: value
+      }
+    })
+  }
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    const numValue = value === '' ? null : parseInt(value, 10)
+    setEmployee(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        [name]: numValue
       }
     })
   }
@@ -244,6 +258,19 @@ export default function EditEmployeePage() {
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="leave">Total Leave Days (Annual)</Label>
+                <Input 
+                  id="leave" 
+                  name="leave" 
+                  type="number"
+                  min="0"
+                  value={employee.leave || ''} 
+                  onChange={handleNumberChange} 
+                  placeholder="e.g., 15"
+                />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="employment_type">Employment Type</Label>
                 <Select 
                   value={employee.employment_type || ''} 
@@ -253,9 +280,8 @@ export default function EditEmployeePage() {
                     <SelectValue placeholder="Select employment type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Full-time">Full-time</SelectItem>
-                    <SelectItem value="Part-time">Part-time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
+                    <SelectItem value="Full Time">Full Time</SelectItem>
+                    <SelectItem value="Part Time">Part Time</SelectItem>
                     <SelectItem value="Internship">Internship</SelectItem>
                   </SelectContent>
                 </Select>
@@ -271,9 +297,8 @@ export default function EditEmployeePage() {
                     <SelectValue placeholder="Select work mode" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="On-site">On-site</SelectItem>
+                    <SelectItem value="Onsite">Onsite</SelectItem>
                     <SelectItem value="Remote">Remote</SelectItem>
-                    <SelectItem value="Hybrid">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
