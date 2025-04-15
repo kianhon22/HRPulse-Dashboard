@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
 import {
   LayoutDashboard,
   Calendar,
@@ -19,11 +20,11 @@ import {
 } from "lucide-react"
 
 const sidebarItems = [
-  {
-    title: "Dashboard",
-    href: "/dashboards",
-    icon: LayoutDashboard,
-  },
+  // {
+  //   title: "Dashboard",
+  //   href: "/dashboards",
+  //   icon: LayoutDashboard,
+  // },
   {
     title: "Employee",
     href: "/employees",
@@ -44,11 +45,6 @@ const sidebarItems = [
     href: "/surveys",
     icon: MessageSquare,
   },
-  // {
-  //   title: "SurveyRespomse",
-  //   href: "/survey_response",
-  //   icon: MessageSquare,
-  // },
   {
     title: "Reward",
     href: "/rewards",
@@ -69,6 +65,25 @@ const sidebarItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const { isAuthenticated } = useAuth()
+  
+  // Store collapse state in localStorage to persist between sessions
+  useEffect(() => {
+    const storedCollapsedState = localStorage.getItem('sidebarCollapsed')
+    if (storedCollapsedState !== null) {
+      setIsCollapsed(storedCollapsedState === 'true')
+    }
+  }, [])
+  
+  // Update localStorage when collapsed state changes
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
+  }, [isCollapsed])
+  
+  // Hide sidebar on login page or when not authenticated
+  if (pathname === "/login" || !isAuthenticated) {
+    return null
+  }
 
   return (
     <div 
