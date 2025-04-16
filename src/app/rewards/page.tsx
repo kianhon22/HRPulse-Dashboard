@@ -122,15 +122,17 @@ export default function RewardsPage() {
                 <Gift className="h-5 w-5 text-primary" />
               </div>
             )}
-            <div>
-              <div className="font-medium">{titleCase(reward.title)}</div>
-              <div className="text-sm text-muted-foreground line-clamp-1">
+            <div className="font-medium">{titleCase(reward.title)}</div>
+              {/* <div className="text-sm text-muted-foreground line-clamp-1">
                 {reward.description}
-              </div>
-            </div>
+              </div> */}
           </div>
         )
       }
+    },
+    {
+      accessorKey: "description",
+      header: "Description",      
     },
     {
       accessorKey: "points",
@@ -168,6 +170,7 @@ export default function RewardsPage() {
     },
     {
       id: "actions",
+      header: "Action",
       cell: ({ row }) => {
         const reward = row.original
         return (

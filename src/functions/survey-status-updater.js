@@ -31,7 +31,7 @@ export const updateSurveyStatuses = async () => {
     // Update Active surveys to Ended if end_date is in the past
     const { data: endedSurveys, error: endingError } = await supabase
       .from('surveys')
-      .update({ status: 'Ended' })
+      .update({ status: 'Closed' })
       .eq('status', 'Active')
       .lt('end_date', today)
       .select()
@@ -39,7 +39,7 @@ export const updateSurveyStatuses = async () => {
     if (endingError) {
       console.error('Error ending surveys:', endingError)
     } else {
-      console.log(`Ended ${endedSurveys?.length || 0} surveys`)
+      console.log(`Closed ${endedSurveys?.length || 0} surveys`)
     }
     
     return {

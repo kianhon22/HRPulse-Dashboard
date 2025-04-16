@@ -63,7 +63,9 @@ const columns: ColumnDef<Attendance>[] = [
     accessorKey: "location",
     header: "Location",
     cell: ({ row }) => {
-      if (!row.getValue("location")) return "-";
+      const location = row.getValue("location") as string | null;
+      if (!location) return "-";
+      return location;
     },
   },
 ]

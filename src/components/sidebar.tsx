@@ -56,8 +56,8 @@ const sidebarItems = [
     icon: Award,
   },
   {
-    title: "Reports",
-    href: "/reports",
+    title: "Analytics",
+    href: "/analytics",
     icon: BarChart3,
   },
 ]

@@ -167,7 +167,7 @@ export default function EmployeesPage() {
   }, [])
 
   return (
-    <div className="container py-8 pr-8">
+    <div className="py-8 pr-8">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Employees</h1>
         <div className="flex space-x-4">

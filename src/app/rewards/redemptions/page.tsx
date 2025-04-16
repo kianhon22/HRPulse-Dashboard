@@ -110,10 +110,10 @@ export default function RedemptionsPage() {
       
       // Calculate total points spent
       const pointsSpent = formattedData.reduce((sum, r) => {
-        if (r.status === 'Redeemed') {
-          return sum + r.points_spent
-        }
-        return sum
+        // if (r.status === 'Completed') {
+        //   return sum + r.points_spent
+        // }
+        return sum + r.points_spent
       }, 0)
       setTotalPointsSpent(pointsSpent)
     } catch (error) {
@@ -147,7 +147,7 @@ export default function RedemptionsPage() {
     try {
       const { error } = await supabase
         .from('reward_redemptions')
-        .update({ status: 'Redeemed' })
+        .update({ status: 'Completed' })
         .eq('id', selectedRedemption.id)
       
       if (error) {

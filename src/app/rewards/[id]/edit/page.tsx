@@ -96,7 +96,7 @@ export default function EditRewardPage() {
       const filePath = `reward-images/${fileName}`
 
       const { error: uploadError } = await supabase.storage
-        .from('images')
+        .from('rewards')
         .upload(filePath, imageFile)
 
       if (uploadError) {
@@ -104,7 +104,7 @@ export default function EditRewardPage() {
       }
 
       const { data } = supabase.storage
-        .from('images')
+        .from('rewards')
         .getPublicUrl(filePath)
 
       return data.publicUrl
@@ -151,7 +151,7 @@ export default function EditRewardPage() {
           description,
           points: parseInt(points),
           image_url: finalImageUrl,
-          is_active: isActive,
+          is_active: true,
           updated_at: new Date().toISOString()
         })
         .eq('id', rewardId)

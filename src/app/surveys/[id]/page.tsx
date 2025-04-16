@@ -509,12 +509,12 @@ export default function SurveyDetailPage() {
                                       return (
                                         <div key={response.id} className="border rounded-md overflow-hidden">
                                           {/* Sentiment badge */}
-                                          {sentimentLabel !== 'UNKNOWN' && (
+                                          {/* {sentimentLabel !== 'UNKNOWN' && (
                                             <div className={`px-3 py-1 text-xs font-medium ${getSentimentBgColor(sentimentLabel)}`}>
                                               {getSentimentIcon(sentimentLabel)} {sentimentLabel.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
                                               {confidence !== null && ` (${confidence}% confidence)`}
                                             </div>
-                                          )}
+                                          )} */}
                                           
                                           {/* Response text */}
                                           <div className="p-3 text-sm">
