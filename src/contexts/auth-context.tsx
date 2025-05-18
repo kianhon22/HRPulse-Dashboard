@@ -20,6 +20,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  changePassword: (newPassword: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,6 +89,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const changePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -95,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated,
         isLoading,
         signOut,
+        changePassword,
       }}
     >
       {children}

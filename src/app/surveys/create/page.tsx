@@ -29,6 +29,7 @@ interface Question {
   question_text: string
   category: string
   order: number
+  type: "rating" | "text"
 }
 
 // Suggested questions by category
@@ -165,7 +166,8 @@ export default function CreateSurveyPage() {
               id: uuidv4(),
               question_text: q.question,
               category: q.category,
-              order: index
+              order: index,
+              type: q.type as "rating" | "text"
             }))
             
             setQuestions(formattedQuestions)
@@ -195,7 +197,8 @@ export default function CreateSurveyPage() {
       id: uuidv4(),
       question_text: "",
       category: category,
-      order: questions.filter(q => q.category === category).length
+      order: questions.filter(q => q.category === category).length,
+      type: "text"
     }
     setQuestions([...questions, newQuestion])
   }
@@ -213,13 +216,14 @@ export default function CreateSurveyPage() {
   }
 
   const addSuggestedQuestions = () => {
-    const newQuestions = [
+    const newQuestions: Question[] = [
       ...questions,
       ...selectedSuggestions.map(text => ({
         id: uuidv4(),
         question_text: text,
         category: activeTab,
-        order: questions.filter(q => q.category === activeTab).length + selectedSuggestions.indexOf(text)
+        order: questions.filter(q => q.category === activeTab).length + selectedSuggestions.indexOf(text),
+        type: "text" as "text" | "rating"
       }))
     ]
     setQuestions(newQuestions)
@@ -284,7 +288,8 @@ export default function CreateSurveyPage() {
         survey_id: survey.id,
         question: q.question_text,
         category: q.category,
-        order: q.order
+        order: q.order,
+        type: q.type
       }))
 
       const { error: questionsError } = await supabase
@@ -541,6 +546,21 @@ export default function CreateSurveyPage() {
                                   placeholder="Enter question"
                                   className="mt-1"
                                 />
+                              </div>
+                              <div>
+                                <Label htmlFor={`type-${question.id}`}>Type</Label>
+                                <Select
+                                  value={question.type}
+                                  onValueChange={value => updateQuestion(question.id, 'type', value as "text" | "rating")}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="text">Text</SelectItem>
+                                    <SelectItem value="rating">Rating</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                             </div>
                           </div>

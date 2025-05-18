@@ -20,6 +20,7 @@ type Question = {
   question: string
   category: string
   created_at: string
+  type: "rating" | "text"
 }
 
 type Response = {
@@ -155,11 +156,11 @@ export default function SurveyDetailPage() {
 
   const getRatingLabel = (rating: number) => {
     switch (rating) {
-      case 1: return 'Very Negative'
-      case 2: return 'Negative'
+      case 1: return 'Strongly Disagree'
+      case 2: return 'Disagree'
       case 3: return 'Neutral'
-      case 4: return 'Positive'
-      case 5: return 'Very Positive'
+      case 4: return 'Agree'
+      case 5: return 'Strongly Agree'
       default: return 'Unknown'
     }
   }
@@ -419,35 +420,38 @@ export default function SurveyDetailPage() {
                                 </p>
                               ) : questionResponses.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No responses yet for this question.</p>
-                              ) : survey.type === "Rating" ? (
+                              ) : question.type === "rating" ? (
                                 // Display rating summary
-                                <div className="space-y-4">
+                                <div className="grid grid-cols-5 gap-2">
                                   {getRatingCounts(question.id).map((count, idx) => {
                                     const rating = idx + 1
                                     const percentage = getRatingPercentage(count, questionResponses.length)
+                                    // pick a bg/text color per rating if you like, or use a single style
                                     return (
-                                      <div key={idx} className="space-y-1">
-                                        <div className="flex justify-between text-sm">
+                                      <div key={rating}
+                                          className="rounded-lg p-2 bg-purple-50 border border-purple-200">
+                                        <div className="flex justify-between items-center text-xs font-medium mb-1">
                                           <span className={getRatingColor(rating)}>
-                                            {rating} - {getRatingLabel(rating)}
+                                            {rating} – {getRatingLabel(rating)}
                                           </span>
-                                          <span className="font-medium">
-                                            {count} ({percentage}%)
-                                          </span>
+                                          <span className="text-purple-700">{percentage}%</span>
                                         </div>
-                                        <Progress value={percentage} className="h-2" />
+                                        <Progress value={percentage} className="h-2 mb-1" />
+                                        <p className="text-xs text-gray-600">
+                                          {count} {count === 1 ? "response" : "responses"}
+                                        </p>
                                       </div>
-                                    )
+                                    )                                  
                                   })}
-                                  <p className="text-sm text-muted-foreground mt-2">
+                                  <div className="text-sm text-muted-foreground mt-2">
                                     Total responses: {questionResponses.length}
-                                  </p>
+                                  </div>
                                 </div>
                               ) : (
-                                // Display text responses with sentiment analysis
+                                // Display text responses with sentiment analysis and expand/collapse
                                 <div className="space-y-4">
                                   {/* Sentiment analysis summary */}
-                                  <div className="pb-4 border-b">
+                                  <div className="border-b">
                                     <div className="grid grid-cols-5 gap-2">
                                       {['VERY_POSITIVE', 'POSITIVE', 'NEUTRAL', 'NEGATIVE', 'VERY_NEGATIVE'].map(sentiment => {
                                         const sentiments = getSentimentSummary(question.id)
@@ -455,75 +459,60 @@ export default function SurveyDetailPage() {
                                         const percentage = sentiments.total > 0 
                                           ? Math.round((count / sentiments.total) * 100) 
                                           : 0
-                                        
                                         return (
                                           <div 
                                             key={sentiment} 
                                             className={`rounded-lg p-2 ${getSentimentBgColor(sentiment)}`}
                                           >
                                             <div className="flex justify-between items-center mb-1">
-                                              <span className={`text-xs font-medium ${getSentimentColor(sentiment)}`}>
-                                                {getSentimentIcon(sentiment)} {sentiment.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
-                                              </span>
-                                              <span className="text-xs font-bold">
-                                                {percentage}%
-                                              </span>
+                                              <span className={`text-xs font-medium ${getSentimentColor(sentiment)}`}>{getSentimentIcon(sentiment)} {sentiment.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}</span>
+                                              <span className="text-xs font-bold">{percentage}%</span>
                                             </div>
-                                            <Progress 
-                                              value={percentage} 
-                                              className="h-2" 
-                                            />
-                                            <p className="text-xs mt-1 text-gray-600">
-                                              {count} {count === 1 ? 'response' : 'responses'}
-                                            </p>
+                                            <Progress value={percentage} className="h-2" />
+                                            <p className="text-xs mt-1 text-gray-600">{count} {count === 1 ? 'response' : 'responses'}</p>
                                           </div>
                                         )
                                       })}
                                     </div>
                                   </div>
-                                  
-                                  {/* Individual responses */}
-                                  <h4 className="text-sm font-medium -mt-2 mb-2">Individual Responses</h4>
-                                  <div className="space-y-2">
-                                    {questionResponses.map(response => {
-                                      // Derive sentiment from the all_scores array
-                                      let sentimentLabel = 'UNKNOWN';
-                                      let confidence = null;
-                                      
-                                      if (response.sentiment && response.sentiment.length > 0) {
-                                        const label = response.sentiment[0].label;
-                                        const score = response.sentiment[0].score;
-                                        confidence = Math.round(score * 100);
-                                        
-                                        // Map the numeric label to sentiment categories
-                                        switch(label) {
-                                          case 1: sentimentLabel = 'VERY_NEGATIVE'; break;
-                                          case 2: sentimentLabel = 'NEGATIVE'; break;
-                                          case 3: sentimentLabel = 'NEUTRAL'; break;
-                                          case 4: sentimentLabel = 'POSITIVE'; break;
-                                          case 5: sentimentLabel = 'VERY_POSITIVE'; break;
-                                          default: sentimentLabel = 'UNKNOWN';
+                                  {/* Expand/collapse for responses */}
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    className="w-full transition-colors"
+                                    onClick={() => setExpandedResponses(prev => ({ ...prev, [question.id]: !prev[question.id] }))}
+                                  >
+                                    {expandedResponses[question.id] ? `Hide Responses (${questionResponses.length})` : `Show Responses (${questionResponses.length})`}
+                                  </Button>
+                                  {expandedResponses[question.id] && (
+                                    <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+                                      {questionResponses.slice(0, 10).map(response => {
+                                        let sentimentLabel = 'UNKNOWN';
+                                        let confidence = null;
+                                        if (response.sentiment && response.sentiment.length > 0) {
+                                          const label = response.sentiment[0].label;
+                                          const score = response.sentiment[0].score;
+                                          confidence = Math.round(score * 100);
+                                          switch(label) {
+                                            case 1: sentimentLabel = 'VERY_NEGATIVE'; break;
+                                            case 2: sentimentLabel = 'NEGATIVE'; break;
+                                            case 3: sentimentLabel = 'NEUTRAL'; break;
+                                            case 4: sentimentLabel = 'POSITIVE'; break;
+                                            case 5: sentimentLabel = 'VERY_POSITIVE'; break;
+                                            default: sentimentLabel = 'UNKNOWN';
+                                          }
                                         }
-                                      }
-                                        
-                                      return (
-                                        <div key={response.id} className="border rounded-md overflow-hidden">
-                                          {/* Sentiment badge */}
-                                          {/* {sentimentLabel !== 'UNKNOWN' && (
-                                            <div className={`px-3 py-1 text-xs font-medium ${getSentimentBgColor(sentimentLabel)}`}>
-                                              {getSentimentIcon(sentimentLabel)} {sentimentLabel.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
-                                              {confidence !== null && ` (${confidence}% confidence)`}
-                                            </div>
-                                          )} */}
-                                          
-                                          {/* Response text */}
-                                          <div className="p-3 text-sm">
-                                            {response.response || "No answer provided"}
+                                        return (
+                                          <div key={response.id} className="border mb-2 rounded-md overflow-hidden">
+                                            <div className="p-3 text-sm">{response.response || "No answer provided"}</div>
                                           </div>
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
+                                        )
+                                      })}
+                                      {/* {questionResponses.length > 10 && (
+                                        <div className="text-xs text-center text-muted-foreground py-2">Showing first 10 of {questionResponses.length} responses</div>
+                                      )} */}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </CardContent>

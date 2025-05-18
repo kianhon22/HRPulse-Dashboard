@@ -20,11 +20,11 @@ import {
 } from "lucide-react"
 
 const sidebarItems = [
-  // {
-  //   title: "Dashboard",
-  //   href: "/dashboards",
-  //   icon: LayoutDashboard,
-  // },
+  {
+    title: "Dashboard",
+    href: "/dashboards",
+    icon: LayoutDashboard,
+  },
   {
     title: "Employee",
     href: "/employees",

@@ -2,14 +2,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 
-type QuestionType = "text" | "multiple_choice" | "rating"
+type QuestionType = "text" | "rating"
 
 interface Question {
   id: string
   question_text: string
-  question_type: QuestionType
-  required: boolean
-  options: string[]
+  type: QuestionType
+  required?: boolean
   order: number
 }
 
@@ -37,17 +36,8 @@ export function SurveyPreview({ title, description, questions, onExitPreview }: 
                   <span className="text-red-500 text-sm">*</span>
                 )}
               </div>
-              {question.question_type === "text" ? (
+              {question.type === "text" ? (
                 <Textarea placeholder="Enter your answer" disabled className="bg-gray-50" />
-              ) : question.question_type === "multiple_choice" ? (
-                <div className="space-y-2">
-                  {question.options.map((option, i) => (
-                    <div key={i} className="flex items-center">
-                      <input type="radio" id={`preview-${question.id}-${i}`} name={`preview-${question.id}`} disabled />
-                      <label htmlFor={`preview-${question.id}-${i}`} className="ml-2">{option || `Option ${i + 1}`}</label>
-                    </div>
-                  ))}
-                </div>
               ) : (
                 <div className="flex items-center space-x-1">
                   {[1, 2, 3, 4, 5].map((num) => (

@@ -24,6 +24,7 @@ interface Question {
   category: string
   order: number
   dbId?: string // For existing questions from DB
+  type: "rating" | "text"
 }
 
 type Survey = {
@@ -178,7 +179,8 @@ export default function EditSurveyPage() {
           question_text: q.question,
           category: q.category,
           order: q.order || 0,
-          dbId: q.id
+          dbId: q.id,
+          type: q.type || "text"
         }))
         
         setQuestions(formattedQuestions)
@@ -225,7 +227,8 @@ export default function EditSurveyPage() {
       id: uuidv4(),
       question_text: "",
       category: category,
-      order: questions.filter(q => q.category === category).length
+      order: questions.filter(q => q.category === category).length,
+      type: "text"
     }
     setQuestions([...questions, newQuestion])
   }
@@ -243,13 +246,14 @@ export default function EditSurveyPage() {
   }
 
   const addSuggestedQuestions = () => {
-    const newQuestions = [
+    const newQuestions: Question[] = [
       ...questions,
       ...selectedSuggestions.map(text => ({
         id: uuidv4(),
         question_text: text,
         category: activeTab,
-        order: questions.filter(q => q.category === activeTab).length + selectedSuggestions.indexOf(text)
+        order: questions.filter(q => q.category === activeTab).length + selectedSuggestions.indexOf(text),
+        type: "text" as "text" | "rating"
       }))
     ]
     setQuestions(newQuestions)
@@ -345,7 +349,8 @@ export default function EditSurveyPage() {
             .update({
               question: question.question_text,
               category: question.category,
-              order: question.order
+              order: question.order,
+              type: question.type
             })
             .eq('id', question.dbId)
           
@@ -362,7 +367,8 @@ export default function EditSurveyPage() {
               survey_id: surveyId,
               question: question.question_text,
               category: question.category,
-              order: question.order
+              order: question.order,
+              type: question.type
             })
           
           if (error) {
@@ -628,6 +634,21 @@ export default function EditSurveyPage() {
                                 onChange={(e) => updateQuestion(question.id, 'question_text', e.target.value)}
                                 placeholder="Enter question text"
                               />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`type-${question.id}`}>Type</Label>
+                              <Select
+                                value={question.type}
+                                onValueChange={value => updateQuestion(question.id, 'type', value as "text" | "rating")}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="text">Text</SelectItem>
+                                  <SelectItem value="rating">Rating</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                         ))}
