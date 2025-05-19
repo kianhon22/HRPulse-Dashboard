@@ -394,7 +394,7 @@ export default function SurveyDetailPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue={categories[0]} value={activeCategory} onValueChange={setActiveCategory}>
-                <TabsList className="mb-4 flex flex-wrap">
+                <TabsList className="grid grid-cols-5 mb-4">
                   {categories.map(category => (
                     <TabsTrigger key={category} value={category}>
                       {category}

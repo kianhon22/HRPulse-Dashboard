@@ -529,9 +529,56 @@ export default function EditSurveyPage() {
         </Card>
         
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Questions</CardTitle>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button type="button" variant="outline">
+                  <Lightbulb className="mr-2 h-4 w-4" />
+                  Suggestions
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Suggested Questions for {activeTab}</DialogTitle>
+                  <DialogDescription>
+                    You may select multiple questions to add to your survey
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto py-4">
+                  {suggestionsByCategory[activeTab as keyof typeof suggestionsByCategory].map((text, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-2 border rounded-md">
+                      <input 
+                        type="checkbox" 
+                        id={`suggestion-${idx}`} 
+                        checked={selectedSuggestions.includes(text)}
+                        onChange={() => toggleSuggestion(text)}
+                        className="mt-1"
+                      />
+                      <label htmlFor={`suggestion-${idx}`} className="text-sm">
+                        {text}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button 
+                      type="button"
+                      onClick={addSuggestedQuestions} 
+                      disabled={selectedSuggestions.length === 0}
+                    >
+                      Add Questions ({selectedSuggestions.length})
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
+
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid grid-cols-5 mb-4">
@@ -544,64 +591,12 @@ export default function EditSurveyPage() {
               
               {categories.map(category => (
                 <TabsContent key={category} value={category} className="space-y-4">
-                  <div className="flex justify-between">
-                    <Button type="button" onClick={() => addQuestion(category)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Question
-                    </Button>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button type="button" variant="outline">
-                          <Lightbulb className="mr-2 h-4 w-4" />
-                          Suggestions
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Suggested Questions for {category}</DialogTitle>
-                          <DialogDescription>
-                            Select questions to add to your survey. You can select multiple questions.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-2 max-h-[60vh] overflow-y-auto py-4">
-                          {suggestionsByCategory[category as keyof typeof suggestionsByCategory].map((text, idx) => (
-                            <div key={idx} className="flex items-start gap-2 p-2 border rounded-md">
-                              <input 
-                                type="checkbox" 
-                                id={`suggestion-${idx}`} 
-                                checked={selectedSuggestions.includes(text)}
-                                onChange={() => toggleSuggestion(text)}
-                                className="mt-1"
-                              />
-                              <label htmlFor={`suggestion-${idx}`} className="text-sm">
-                                {text}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button type="button" variant="outline">Cancel</Button>
-                          </DialogClose>
-                          <Button 
-                            type="button"
-                            onClick={addSuggestedQuestions} 
-                            disabled={selectedSuggestions.length === 0}
-                          >
-                            Add Selected ({selectedSuggestions.length})
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  
                   {questions.filter(q => q.category === category).length === 0 ? (
                     <div className="text-center py-6 border rounded-lg">
                       <p className="text-muted-foreground">No questions added yet for this category</p>
-                      <Button type="button" onClick={() => addQuestion(category)} variant="link" className="mt-2">
+                      <Button type="button" onClick={() => addQuestion(category)} className="mt-4">
                         <Plus className="mr-2 h-4 w-4" />
-                        Add your first question
+                        Add Question
                       </Button>
                     </div>
                   ) : (
@@ -618,7 +613,7 @@ export default function EditSurveyPage() {
                                 onClick={() => removeQuestion(question.id)}
                                 className="h-8 w-8 text-red-500 hover:text-red-700"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-5 w-5" />
                               </Button>
                             </div>
                             <div className="mb-4 flex items-center">
@@ -627,15 +622,15 @@ export default function EditSurveyPage() {
                             </div>
                             
                             <div className="space-y-2">
-                              <Label htmlFor={`question-${question.id}`}>Question Text *</Label>
+                              <Label htmlFor={`question-${question.id}`}>Question</Label>
                               <Input
                                 id={`question-${question.id}`}
                                 value={question.question_text}
                                 onChange={(e) => updateQuestion(question.id, 'question_text', e.target.value)}
-                                placeholder="Enter question text"
+                                placeholder="Enter question..."
                               />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 mt-2">
                               <Label htmlFor={`type-${question.id}`}>Type</Label>
                               <Select
                                 value={question.type}
@@ -653,9 +648,9 @@ export default function EditSurveyPage() {
                           </div>
                         ))}
 
-                      <Button type="button" onClick={() => addQuestion(category)} variant="outline" className="w-full mt-4">
+                      <Button type="button" onClick={() => addQuestion(category)} className="w-full mt-4">
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Another Question
+                        Add Question
                       </Button>
                     </div>
                   )}
@@ -663,20 +658,21 @@ export default function EditSurveyPage() {
               ))}
             </Tabs>
           </CardContent>
-          <CardFooter className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(`/surveys/${surveyId}`)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
-          </CardFooter>
         </Card>
+        
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push(`/surveys/${surveyId}`)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Changes
+          </Button>
+        </div>
       </form>
     </div>
   )

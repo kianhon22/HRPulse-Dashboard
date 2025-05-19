@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { LogOut, User, Key } from "lucide-react"
 import { showToast } from "@/lib/utils/toast"
@@ -15,6 +16,9 @@ export function UserProfile() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const { user, isAuthenticated, signOut, changePassword } = useAuth()
 
+  // Hide it in login page
+  if (usePathname() === "/login") return null;
+  
   const handleSignOut = async () => {
     setIsLoading(true)
     try {
@@ -61,7 +65,7 @@ export function UserProfile() {
         </button>
         {isDropdownOpen && (
           <div className="absolute left-0 bottom-full mb-0.5 w-45 bg-white text-black rounded-lg shadow-lg border border-gray-800 py-2">
-            <div className="px-4 py-1 text-xs font-bold tracking-widest cursor-default select-text">
+            <div className="px-4 py-1 text-sm font-bold tracking-widest cursor-default select-text text-center">
               {user.email}
             </div>
             <div
