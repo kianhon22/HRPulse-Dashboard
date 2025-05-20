@@ -167,12 +167,34 @@ export default function SurveyDetailPage() {
 
   const getRatingColor = (rating: number) => {
     switch (rating) {
-      case 1: return 'text-red-600'
-      case 2: return 'text-orange-600'
+      case 1: return 'text-red-700'
+      case 2: return 'text-red-600'
       case 3: return 'text-yellow-600'
       case 4: return 'text-green-600'
       case 5: return 'text-green-700'
       default: return 'text-gray-600'
+    }
+  }
+
+  const getRatingBgColor = (rating: number) => {
+    switch (rating) {
+      case 1: return 'bg-red-200'
+      case 2: return 'bg-red-100'
+      case 3: return 'bg-yellow-100'
+      case 4: return 'bg-green-100'
+      case 5: return 'bg-green-200'
+      default: return 'bg-gray-100'
+    }
+  }
+
+  const getRatingIcon = (rating: number) => {
+    switch (rating) {
+      case 1: return <ThumbsDown className="h-4 w-4" />
+      case 2: return <Frown      className="h-4 w-4" />
+      case 3: return <Meh        className="h-4 w-4" />
+      case 4: return <Smile      className="h-4 w-4" />
+      case 5: return <ThumbsUp   className="h-4 w-4" />
+      default: return null
     }
   }
 
@@ -242,11 +264,11 @@ export default function SurveyDetailPage() {
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
       case 'VERY_POSITIVE': return 'text-green-700'
-      case 'POSITIVE': return 'text-green-600'
-      case 'NEUTRAL': return 'text-yellow-600'
-      case 'NEGATIVE': return 'text-red-600'
+      case 'POSITIVE'     : return 'text-green-600'
+      case 'NEUTRAL'      : return 'text-yellow-600'
+      case 'NEGATIVE'     : return 'text-red-600'
       case 'VERY_NEGATIVE': return 'text-red-700'
-      default: return 'text-gray-600'
+      default             : return 'text-gray-600'
     }
   }
 
@@ -254,11 +276,11 @@ export default function SurveyDetailPage() {
   const getSentimentBgColor = (sentiment: string) => {
     switch (sentiment) {
       case 'VERY_POSITIVE': return 'bg-green-200'
-      case 'POSITIVE': return 'bg-green-100'
-      case 'NEUTRAL': return 'bg-yellow-100'
-      case 'NEGATIVE': return 'bg-red-100'
+      case 'POSITIVE'     : return 'bg-green-100'
+      case 'NEUTRAL'      : return 'bg-yellow-100'
+      case 'NEGATIVE'     : return 'bg-red-100'
       case 'VERY_NEGATIVE': return 'bg-red-200'
-      default: return 'bg-gray-100'
+      default             : return 'bg-gray-100'
     }
   }
 
@@ -266,11 +288,11 @@ export default function SurveyDetailPage() {
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
       case 'VERY_POSITIVE': return <ThumbsUp className="h-4 w-4 mr-1" />
-      case 'POSITIVE': return <Smile className="h-4 w-4 mr-1" />
-      case 'NEUTRAL': return <Meh className="h-4 w-4 mr-1" />
-      case 'NEGATIVE': return <Frown className="h-4 w-4 mr-1" />
+      case 'POSITIVE'     : return <Smile className="h-4 w-4 mr-1" />
+      case 'NEUTRAL'      : return <Meh className="h-4 w-4 mr-1" />
+      case 'NEGATIVE'     : return <Frown className="h-4 w-4 mr-1" />
       case 'VERY_NEGATIVE': return <ThumbsDown className="h-4 w-4 mr-1" />
-      default: return null
+      default             : return null
     }
   }
 
@@ -425,16 +447,18 @@ export default function SurveyDetailPage() {
                                 <div className="grid grid-cols-5 gap-2">
                                   {getRatingCounts(question.id).map((count, idx) => {
                                     const rating = idx + 1
-                                    const percentage = getRatingPercentage(count, questionResponses.length)
-                                    // pick a bg/text color per rating if you like, or use a single style
+                                    const total     = questionResponses.length
+                                    const percentage = total === 0 ? 0 : Math.round((count/total)*100)
+                                    // const percentage = getRatingPercentage(count, questionResponses.length)
+
                                     return (
-                                      <div key={rating}
-                                          className="rounded-lg p-2 bg-purple-50 border border-purple-200">
-                                        <div className="flex justify-between items-center text-xs font-medium mb-1">
-                                          <span className={getRatingColor(rating)}>
-                                            {rating} – {getRatingLabel(rating)}
+                                      <div key={rating} className={`rounded-lg p-2 ${getRatingBgColor(rating)}`}>
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className={`text-xs font-medium flex items-center gap-1 ${getRatingColor(rating)}`}>
+                                            {getRatingIcon(rating)}
+                                            {getRatingLabel(rating)}
                                           </span>
-                                          <span className="text-purple-700">{percentage}%</span>
+                                          <span className="text-xs font-bold">{percentage}%</span>
                                         </div>
                                         <Progress value={percentage} className="h-2 mb-1" />
                                         <p className="text-xs text-gray-600">
@@ -453,7 +477,7 @@ export default function SurveyDetailPage() {
                                   {/* Sentiment analysis summary */}
                                   <div className="border-b">
                                     <div className="grid grid-cols-5 gap-2">
-                                      {['VERY_POSITIVE', 'POSITIVE', 'NEUTRAL', 'NEGATIVE', 'VERY_NEGATIVE'].map(sentiment => {
+                                      {['VERY_NEGATIVE', 'NEGATIVE', 'NEUTRAL', 'POSITIVE', 'VERY_POSITIVE'].map(sentiment => {
                                         const sentiments = getSentimentSummary(question.id)
                                         const count = sentiments[sentiment as keyof typeof sentiments]
                                         const percentage = sentiments.total > 0 
@@ -465,7 +489,9 @@ export default function SurveyDetailPage() {
                                             className={`rounded-lg p-2 ${getSentimentBgColor(sentiment)}`}
                                           >
                                             <div className="flex justify-between items-center mb-1">
-                                              <span className={`text-xs font-medium ${getSentimentColor(sentiment)}`}>{getSentimentIcon(sentiment)} {sentiment.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}</span>
+                                              <span className={`text-xs font-medium flex items-center gap-1 ${getSentimentColor(sentiment)}`}>
+                                                {getSentimentIcon(sentiment)} {sentiment.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
+                                              </span>
                                               <span className="text-xs font-bold">{percentage}%</span>
                                             </div>
                                             <Progress value={percentage} className="h-2" />
@@ -479,7 +505,7 @@ export default function SurveyDetailPage() {
                                   <Button
                                     variant="default"
                                     size="sm"
-                                    className="w-full transition-colors"
+                                    className="w-full transition-colors mt-2"
                                     onClick={() => setExpandedResponses(prev => ({ ...prev, [question.id]: !prev[question.id] }))}
                                   >
                                     {expandedResponses[question.id] ? `Hide Responses (${questionResponses.length})` : `Show Responses (${questionResponses.length})`}

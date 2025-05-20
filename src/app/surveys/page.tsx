@@ -160,10 +160,9 @@ export default function FeedbackPage() {
       const { data: surveysData, error } = await supabase
         .from('surveys')
         .select()
-        .eq('is_template', false) // Exclude templates
-        .eq('type', 'Text')
-        .gte('created_at', startDate)
-        .lte('created_at', endDate)
+        .eq('is_template', false)
+        .gte('start_date', startDate)
+        .lte('end_date', endDate)
         .order('created_at', { ascending: false })
       
       if (error) {
