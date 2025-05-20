@@ -17,6 +17,8 @@ import {
   Clock,
   Gift,
   Star,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react"
 
 const sidebarItems = [
@@ -62,10 +64,30 @@ const sidebarItems = [
   },
 ]
 
+const analyticsChildren = [
+  {
+    title: "Engagement Score",
+    href: "/analytics/engagement-score",
+  },
+  {
+    title: "Survey Response",
+    href: "/analytics/survey-response",
+  },
+  {
+    title: "Attendance Rate",
+    href: "/analytics/attendance-rate",
+  },
+  {
+    title: "Recognition Rate",
+    href: "/analytics/recognition-rate",
+  },
+]
+
 export function Sidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { isAuthenticated } = useAuth()
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
   
   // Store collapse state in localStorage to persist between sessions
   useEffect(() => {
@@ -79,6 +101,9 @@ export function Sidebar() {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
   }, [isCollapsed])
+  
+  // Determine if any analytics child is active
+  const isAnalyticsActive = analyticsChildren.some(child => pathname.startsWith(child.href))
   
   // Hide sidebar on login page or when not authenticated
   if (pathname === "/login" || !isAuthenticated) {
@@ -118,6 +143,50 @@ export function Sidebar() {
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {sidebarItems.map((item) => {
+          if (item.title === "Analytics") {
+            return (
+              <div key="analytics" className="relative" onMouseEnter={() => setAnalyticsOpen(true)} onMouseLeave={() => setAnalyticsOpen(false)}>
+                <div
+                  className={cn(
+                    "flex items-center space-x-3 rounded-lg px-1 py-2 text-sm font-medium transition-colors cursor-pointer select-none",
+                    (analyticsOpen || isAnalyticsActive)
+                      ? "bg-white text-[#6A1B9A]"
+                      : "text-white hover:bg-white hover:text-[#6A1B9A]"
+                  )}
+
+                >
+                  <item.icon className="-ml-0.5 h-5 w-5 flex-shrink-0" />
+                  <span className={cn("transition-all duration-300", isCollapsed ? "opacity-0 w-0" : "opacity-100")}>Analytics</span>
+                  <span className="ml-auto">
+                    {(analyticsOpen || isAnalyticsActive)
+                      ? <ChevronDown className="h-4 w-4" />
+                      : <ChevronRight className="h-4 w-4" />}
+                  </span>
+                </div>
+                {(analyticsOpen || isAnalyticsActive) && !isCollapsed && (
+                  <div className="ml-7 mt-1 space-y-1 bg-[#721ca7] rounded shadow-lg py-2">
+                    {analyticsChildren.map(child => {
+                      const isChildActive = pathname.startsWith(child.href)
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={cn(
+                            "block px-3 py-1 rounded text-sm transition-colors",
+                            isChildActive
+                              ? "bg-white text-[#6A1B9A] font-semibold"
+                              : "text-white hover:bg-white hover:text-[#6A1B9A]"
+                          )}
+                        >
+                          {child.title}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          }
           const isActive = pathname === item.href
           return (
             <Link
@@ -131,11 +200,7 @@ export function Sidebar() {
               )}
             >
               <item.icon className="-ml-0.5 h-5 w-5 flex-shrink-0" />
-              <span className={cn("transition-all duration-300", 
-                isCollapsed ? "opacity-0 w-0" : "opacity-100"
-              )}>
-                {item.title}
-              </span>
+              <span className={cn("transition-all duration-300", isCollapsed ? "opacity-0 w-0" : "opacity-100")}>{item.title}</span>
             </Link>
           )
         })}
