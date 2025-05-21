@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { UserProfile } from "@/components/user-profile";
 import { AuthProvider } from "@/contexts/auth-context";
 import { MainContent } from "@/components/main-content";
+import { Suspense } from 'react'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,11 +31,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <MainContent>{children}</MainContent>
-              <UserProfile />
-            </div>
+          {/* fallback={<div>Loading...</div>}> */}
+            <Suspense>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <MainContent>{children}</MainContent>
+                <UserProfile />
+              </div>
+            </Suspense>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
