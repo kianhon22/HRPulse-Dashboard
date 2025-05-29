@@ -5,10 +5,11 @@ import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 
 interface MainContentProps {
-  children: React.ReactNode
+  children: React.ReactNode,
+  isCollapsed: boolean
 }
 
-export function MainContent({ children }: MainContentProps) {
+export function MainContent({ children, isCollapsed }: MainContentProps) {
   const { isAuthenticated } = useAuth()
   const pathname = usePathname()
   
@@ -19,10 +20,13 @@ export function MainContent({ children }: MainContentProps) {
     <main 
       className={cn(
         "flex-1 overflow-x-hidden transition-all duration-300",
-        isSidebarVisible ? "pl-16 lg:pl-58" : "" // Add padding when sidebar is visible
+        isSidebarVisible ? 
+          isCollapsed ? 
+            "pl-16 lg:pl-18" : "pl-64 lg:pl-58" 
+          : ""
       )}
     >
       {children}
     </main>
   )
-} 
+}

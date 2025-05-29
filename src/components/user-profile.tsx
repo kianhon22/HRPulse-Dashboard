@@ -64,19 +64,20 @@ export function UserProfile() {
           <User className="w-6 h-6" />
         </button>
         {isDropdownOpen && (
-          <div className="absolute left-0 bottom-full mb-0.5 w-45 bg-white text-black rounded-lg shadow-lg border border-gray-800 py-2">
-            <div className="px-4 py-1 text-sm font-bold tracking-widest cursor-default select-text text-center">
+          <div className="absolute left-0 bottom-full mb-0.5 w-45 bg-white text-black rounded-lg shadow-lg border border-gray-800 py-1">
+            <div className="px-4 py-1.5 text-xs font-bold tracking-widest cursor-default select-text text-center">
               {user.email}
             </div>
+            <div className="border-t border-gray-300" />
             <div
-              className="px-4 py-1 text-sm text-black font-semibold hover:bg-[#6A1B9A] hover:text-white cursor-pointer transition"
+              className="px-4 py-1.5 text-xs text-black font-semibold hover:bg-[#6A1B9A] hover:text-white cursor-pointer transition"
               onClick={() => setPasswordModalOpen(true)}
             >
               <Key className="inline-block mr-2 w-4 h-4" />
               Change Password
             </div>
             <div
-              className="px-4 py-1 text-sm font-semibold text-black hover:bg-[#6A1B9A] hover:text-white cursor-pointer flex items-center transition"
+              className="px-4 py-1.5 text-xs font-semibold text-black hover:bg-[#6A1B9A] hover:text-white cursor-pointer flex items-center transition"
               onClick={() => setLogoutConfirmOpen(true)}
             >
               <LogOut className="inline-block mr-2 w-4 h-4" />

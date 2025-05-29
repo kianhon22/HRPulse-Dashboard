@@ -83,24 +83,17 @@ const analyticsChildren = [
   },
 ]
 
-export function Sidebar() {
+export function Sidebar({
+  isCollapsed,
+  setIsCollapsed
+}: {
+  isCollapsed: boolean
+  setIsCollapsed: (val: boolean) => void
+}) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  // const [isCollapsed, setIsCollapsed] = useState(false)
   const { isAuthenticated } = useAuth()
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
-  
-  // Store collapse state in localStorage to persist between sessions
-  useEffect(() => {
-    const storedCollapsedState = localStorage.getItem('sidebarCollapsed')
-    if (storedCollapsedState !== null) {
-      setIsCollapsed(storedCollapsedState === 'true')
-    }
-  }, [])
-  
-  // Update localStorage when collapsed state changes
-  useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
-  }, [isCollapsed])
   
   // Determine if any analytics child is active
   const isAnalyticsActive = analyticsChildren.some(child => pathname.startsWith(child.href))
