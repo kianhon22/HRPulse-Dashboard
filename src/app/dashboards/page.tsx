@@ -142,7 +142,6 @@ export default function AnalyticsDashboard() {
         // Engagement Score Calculation
         const avgLatest = latestAnswers.length > 0 ? latestAnswers.reduce((sum, a) => sum + Number(a.response), 0) / latestAnswers.length : 0
         const avgLast = lastAnswers.length > 0 ? lastAnswers.reduce((sum, a) => sum + Number(a.response), 0) / lastAnswers.length : 0
-        console.log('testttttttttttttttttt', latestAnswers)
         const engagementScore = (avgLatest * 20).toFixed(1)
         const engagementScoreLast = (avgLast * 20).toFixed(1)
         const engagementTrend = (Number(engagementScore) - Number(engagementScoreLast)).toFixed(1)
@@ -179,12 +178,12 @@ export default function AnalyticsDashboard() {
         const lastMonth = subMonths(now, 1)
         const lastMonthStart = startOfMonth(lastMonth)
         const lastMonthEnd = endOfMonth(lastMonth)
-        // Get all attendances for current and last month
+        // Get all attendances for current year and previous months
         const { data: attendances } = await supabase
           .from('attendances')
           .select()
-          .gte('check_in', format(lastMonthStart, 'yyyy-MM-dd'))
-          .lte('check_in', format(monthEnd, 'yyyy-MM-dd'))
+          .gte('check_in', `${currentYear}-01-01`)
+          .lt('check_in', `${currentYear + 1}-01-01`)
         const attendanceList = attendances || []
         // Helper to count workdays in a month (excluding weekends)
         function countWorkdays(start: Date, end: Date) {
@@ -207,23 +206,27 @@ export default function AnalyticsDashboard() {
         const attendanceRateLast = possibleAttendancesLastMonth > 0 ? (attendanceLastMonth / possibleAttendancesLastMonth * 100).toFixed(1) : '0.0'
         const attendanceTrend = (Number(attendanceRate) - Number(attendanceRateLast)).toFixed(1)
 
-        // 7. Recognition Rate Calculation (approved recognitions this month vs last month)
-        // Current month recognitions
+        // 7. Recognition Rate Calculation (recognitions for current year)
         const { data: recognitions } = await supabase
           .from('recognitions')
-          .select()
-          .gte('created_at', format(monthStart, 'yyyy-MM-dd'));
-        const approvedRecognitions = (recognitions || []).filter(r => r.status === 'Approved');
-        const recognitionRate = totalEmployees > 0 ? (approvedRecognitions.length / totalEmployees * 100).toFixed(1) : '0.0';
+          .select('created_at, receiver_id')
+          .gte('created_at', `${currentYear}-01-01`)
+          .lt('created_at', `${currentYear + 1}-01-01`)
 
-        // Last month recognitions
-        const { data: recognitionsLastMonth } = await supabase
-          .from('recognitions')
-          .select()
-          .gte('created_at', format(lastMonthStart, 'yyyy-MM-dd'))
-          .lte('created_at', format(lastMonthEnd, 'yyyy-MM-dd'));
-        const approvedRecognitionsLast = (recognitionsLastMonth || []).filter(r => r.status === 'Approved');
-        const recognitionRateLast = totalEmployees > 0 ? (approvedRecognitionsLast.length / totalEmployees * 100).toFixed(1) : '0.0';
+        const recognitionList = recognitions || [];
+
+        const recognitionThisMonth = recognitionList.filter(r => {
+          const d = parseISO(r.created_at)
+          return d >= monthStart && d <= monthEnd
+        })
+
+        const recognitionLastMonth = recognitionList.filter(r => {
+          const d = parseISO(r.created_at)
+          return d >= lastMonthStart && d <= lastMonthEnd
+        })
+
+        const recognitionRate = totalEmployees > 0 ? (recognitionThisMonth.length / totalEmployees * 100).toFixed(1) : '0.0';
+        const recognitionRateLast = totalEmployees > 0 ? (recognitionLastMonth.length / totalEmployees * 100).toFixed(1) : '0.0';
         const recognitionTrend = (Number(recognitionRate) - Number(recognitionRateLast)).toFixed(1);
 
         // Update metrics
@@ -331,7 +334,7 @@ export default function AnalyticsDashboard() {
         const recognitionYearData = []
         for (let m = 0; m < 12; m++) {
           const monthDate = new Date(currentYear, m, 1)
-          const count = (approvedRecognitions || []).filter(r => {
+          const count = (recognitionList || []).filter(r => {
             const d = parseISO(r.created_at)
             return getMonth(d) === m && getYear(d) === currentYear
           }).length

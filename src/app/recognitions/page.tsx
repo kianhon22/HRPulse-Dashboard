@@ -431,7 +431,7 @@ export default function RecognitionsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Recognitions</h1>
         <div className="flex space-x-2">
-          <Button onClick={() => exportToCSV(columns, recognitions, "Employee Recognitions")}>
+          <Button onClick={() => exportToCSV(columns, recognitions, `Recognitions_${selectedYear}`)}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>

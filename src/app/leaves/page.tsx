@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus, ThumbsUp, ShieldCheck, ShieldX, Download } from "lucide-react"
+import { Plus, ThumbsUp, ShieldCheck, ShieldX, Download, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
@@ -19,7 +19,7 @@ type Leave = {
   leave_type: string
   start_date: string
   end_date: string
-  status: "Pending" | "Approved" | "Rejected"
+  status: "Pending" | "Approved" | "Rejected" | "Cancelled"
   reason: string
   hr_remarks: string | null
   attachment_url: string | null
@@ -112,6 +112,7 @@ const filterableColumns = [
       { label: "Pending", value: "Pending" },
       { label: "Approved", value: "Approved" },
       { label: "Rejected", value: "Rejected" },
+      { label: "Cancelled", value: "Cancelled" },
     ],
   },
 ]
@@ -121,6 +122,7 @@ const getStatusColor = (status: string) => {
     case 'Approved': return 'bg-green-100 text-green-800 border-green-200'
     case 'Rejected': return 'bg-red-100 text-red-800 border-red-200'
     case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    case 'Cancelled': return 'bg-gray-100 text-gray-800 border-gray-200'
     default: return 'bg-gray-100 text-gray-800 border-gray-200'
   }
 }
@@ -130,6 +132,7 @@ const getStatusIcon = (status: string) => {
     case 'Approved': return <ShieldCheck className="mr-1 h-3 w-3" />
     case 'Rejected': return <ShieldX className="mr-1 h-3 w-3" />
     case 'Pending': return <ThumbsUp className="mr-1 h-3 w-3" />
+    case 'Cancelled': return <X className="mr-1 h-3 w-3" />
     default: return null
   }
 }
@@ -208,7 +211,7 @@ export default function LeavePage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Leaves</h1>
         <div className="flex space-x-4">
-          <Button onClick={() => exportToCSV(columns, data, "leaves")}>
+          <Button onClick={() => exportToCSV(columns, data, `Leaves_${selectedYear}`)}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { supabase } from "@/lib/supabase"
 import { showToast } from "@/lib/utils/toast"
 import { titleCase } from "@/lib/utils/formatText"
@@ -243,7 +243,7 @@ export default function EmployeeDetailPage() {
                     <Calendar className="h-5 w-5 text-gray-500 mr-3" />
                     <div>
                       <p className="text-sm font-medium text-gray-500">Joining Date</p>
-                      <p>{employee.join_company_date ? format(employee.join_company_date, "MMMM d, yyyy") : "-"}</p>
+                      <p>{employee.join_company_date ? format(parseISO(employee.join_company_date.toString()), "MMMM d, yyyy") : "-"}</p>
                     </div>
                   </div>
 
@@ -251,7 +251,7 @@ export default function EmployeeDetailPage() {
                     <Calendar className="h-5 w-5 text-gray-500 mr-3" />
                     <div>
                       <p className="text-sm font-medium text-gray-500">Leaving Date</p>
-                      <p>{employee.left_company_date ? format(employee.left_company_date, "MMMM d, yyyy") : "-"}</p>
+                      <p>{employee.left_company_date ? format(parseISO(employee.left_company_date.toString()), "MMMM d, yyyy") : "-"}</p>
                     </div>
                   </div>
                 </div>

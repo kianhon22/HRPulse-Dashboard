@@ -120,7 +120,7 @@ export default function AttendancePage() {
     <div className="py-8 pr-8">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Attendances</h1>
-        <Button onClick={() => exportToCSV(columns, data, "attendances")}>
+        <Button onClick={() => exportToCSV(columns, data, `Attendances_${selectedYear}`)}>
           <Download className="mr-2 h-4 w-4" />
           Export
         </Button>
