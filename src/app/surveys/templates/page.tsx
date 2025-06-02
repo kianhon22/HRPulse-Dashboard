@@ -266,12 +266,7 @@ export default function TemplatesPage() {
                       </Tabs>
                     )}
                   </CardContent>
-                  <CardFooter>
-                    <Button className="w-full" onClick={() => handleDuplicateTemplate(activeTemplate.id)}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Use This Template
-                    </Button>
-                  </CardFooter>
+
                 </Card>
               )}
             </div>

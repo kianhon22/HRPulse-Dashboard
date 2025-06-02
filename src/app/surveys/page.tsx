@@ -61,12 +61,12 @@ export default function FeedbackPage() {
       cell: ({ row }) => {
         const status = row.getValue("status") as string
         return (
-          <div className={`capitalize font-medium ${
-            status === "Active" ? "text-green-600" :
-            status === "Closed" ? "text-red-600" :
-            status === "Draft" ? "text-gray-600" :
-            status === "Scheduled" ? "text-yellow-600" :
-            "text-gray-600"
+          <div className={`capitalize font-medium px-2 py-1 rounded-md text-sm ${
+            status === "Active" ? "text-green-700 bg-green-100" :
+            status === "Closed" ? "text-red-700 bg-red-100" :
+            status === "Draft" ? "text-gray-700 bg-gray-100" :
+            status === "Scheduled" ? "text-yellow-700 bg-yellow-100" :
+            "text-gray-700 bg-gray-100"
           }`}>
             {status}
           </div>

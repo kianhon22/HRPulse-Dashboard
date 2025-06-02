@@ -18,7 +18,7 @@ type Leave = {
   leave_type: string
   start_date: string
   end_date: string
-  status: "Pending" | "Approved" | "Rejected"
+  status: "Pending" | "Approved" | "Rejected" | "Cancelled"
   reason: string
   hr_remarks: string | null
   attachment_url: string | null
@@ -95,6 +95,7 @@ export function LeaveDetailDialog({ leave, open, onOpenChange, onLeaveUpdated }:
               <p className={`capitalize font-medium ${
                 leave.status === "Approved" ? "text-green-600" :
                 leave.status === "Rejected" ? "text-red-600" :
+                leave.status === "Cancelled" ? "text-gray-600" :
                 "text-yellow-600"
               }`}>
                 {leave.status}
@@ -160,13 +161,6 @@ export function LeaveDetailDialog({ leave, open, onOpenChange, onLeaveUpdated }:
 
         {leave.status === "Pending" && (
           <DialogFooter className="flex gap-2">
-            {/* <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button> */}
             <Button
               variant="secondary"
               onClick={() => handleStatusUpdate("Rejected")}

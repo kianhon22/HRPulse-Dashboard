@@ -114,24 +114,26 @@ export function Sidebar({
     >
       <div className="flex h-16 items-center justify-between border-b px-4">
         <Link href="/" className="flex items-center space-x-2">
-          {/* <Image
-            src="/logo.png"
+          <Image
+            src="/white logo.png"
             alt="HRPulse Logo"
-            width={32}
-            height={32}
-            className="rounded-full"
-          /> */}
-          <span className={cn("font-bold text-white transition-all text-lg ml-5 duration-300", 
-            isCollapsed ? "opacity-0 w-0" : "opacity-100"
+            width={isCollapsed ? 58 : 80}
+            height={isCollapsed ? 58 : 80}
+            className={cn("rounded-full flex-shrink-0", isCollapsed ? "-ml-2.5" : "")}
+          />
+          {/* <span className={cn("font-bold text-white transition-all text-lg duration-300", 
+            isCollapsed ? "opacity-0 w-0 ml-0" : "opacity-100 ml-2"
           )}>
             HRPulse
-          </span>
+          </span> */}
         </Link>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="text-white hover:text-gray-200"
+          className={cn("text-white hover:text-gray-200 transition-all duration-300", 
+            isCollapsed ? "opacity-0 w-0" : "opacity-100"
+          )}
         >
-          <Menu className={cn("h-6 w-6", isCollapsed ? "-ml-6" : "")}/>
+          <Menu className="h-6 w-6"/>
         </button>
       </div>
       <nav className="flex-1 space-y-1 p-4">
