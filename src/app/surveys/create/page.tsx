@@ -21,6 +21,7 @@ import { format } from "date-fns"
 import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 // type QuestionType = "Text" | "Rating"
 
@@ -112,6 +113,7 @@ export default function CreateSurveyPage() {
   const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([])
   const [loadingTemplate, setLoadingTemplate] = useState(false)
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
+  const [showQuarterlyAlert, setShowQuarterlyAlert] = useState(false)
   
   const categories = [
     "Workload & Balance",
@@ -238,6 +240,24 @@ export default function CreateSurveyPage() {
     }
   }
 
+  const checkQuarterlySurveys = async (selectedStartDate: Date) => {
+    const year = selectedStartDate.getFullYear();
+    
+    const { data: existingSurveys, error } = await supabase
+      .from('surveys')
+      .select('id, title, start_date')
+      .eq('is_template', false)
+      .gte('start_date', `${year}-01-01`)
+      .lt('start_date', `${year + 1}-01-01`);
+    
+    if (error) {
+      console.error('Error checking existing surveys:', error);
+      return false;
+    }
+    
+    return (existingSurveys || []).length >= 4;
+  };
+
   const handleSubmit = async () => {
     // Validate form
     if (!title.trim()) {
@@ -256,6 +276,15 @@ export default function CreateSurveyPage() {
       if (!q.question_text.trim()) {
         showToast.error(`Question ${i + 1} text is required`)
         return
+      }
+    }
+
+    // Check quarterly survey limit if not a template and start date is set
+    if (!saveAsTemplate && startDate) {
+      const isLimitReached = await checkQuarterlySurveys(startDate);
+      if (isLimitReached) {
+        setShowQuarterlyAlert(true);
+        return;
       }
     }
 
@@ -426,18 +455,10 @@ export default function CreateSurveyPage() {
                 </Popover>
               </div>
             </div>
-            {/* <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="saveAsTemplate"
-                checked={saveAsTemplate}
-                onChange={(e) => setSaveAsTemplate(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <Label htmlFor="saveAsTemplate" className="text-sm font-medium">
-                Save as template (will not be deployed as an active survey)
-              </Label>
-            </div> */}
+            {/* <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md p-3 mt-2"> */}
+            <div className="-mb-3 text-xs text-amber-600">
+              <strong>*</strong>You should create only 4 surveys (quarterly) per year to maintain a balanced assessment schedule.
+            </div>
           </CardContent>
         </Card>
 
@@ -582,6 +603,33 @@ export default function CreateSurveyPage() {
           </Button>
         </div>
       </div>
+
+      {/* Quarterly Survey Limit Alert */}
+      <AlertDialog open={showQuarterlyAlert} onOpenChange={setShowQuarterlyAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quarterly Survey Limit Reached</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have already created 4 surveys for {startDate?.getFullYear()}. 
+              We recommend maintaining only 4 quarterly surveys per year for optimal employee engagement. 
+              Would you like to continue anyway?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowQuarterlyAlert(false);
+                setIsSubmitting(true);
+                // Continue with survey creation logic
+                handleSubmit();
+              }}
+            >
+              Continue Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 
