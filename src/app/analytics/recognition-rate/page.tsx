@@ -104,13 +104,13 @@ const exportToCSV = (data: any, filters: any) => {
   // Add headers
   if (filters.department === "Department") {
     // Department breakdown
-    csvData.push(['Department', 'Recognition Rate (%)', 'Recognition Count', 'Total Employees']);
+    csvData.push(['Department', 'Recognition Rate (%)', 'Total Recognition', 'Total Employees']);
     data.tableData.forEach((row: any) => {
       csvData.push([row.department, row.rate, row.count, row.employees]);
     });
   } else {
     // Time series data
-    csvData.push(['Period', 'Recognition Rate (%)', 'Recognition Count']);
+    csvData.push(['Period', 'Recognition Rate (%)', 'Total Recognition']);
     data.chartData.forEach((row: any) => {
       csvData.push([row.period, row.rate, row.count]);
     });
@@ -150,10 +150,11 @@ export default function RecognitionRateAnalytics() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      // Get all years with recognition data
+      // Get all years with approved recognition data
       const { data: recognitions } = await supabase
         .from('recognitions')
         .select('created_at')
+        .eq('status', 'Approved')
         .order('created_at', { ascending: true });
       
       if (recognitions && recognitions.length > 0) {
@@ -198,10 +199,11 @@ export default function RecognitionRateAnalytics() {
         const employeeList = employees || [];
         const totalEmployees = employeeList.length;
 
-        // Get recognitions for the selected year (all statuses, not just approved)
+        // Get approved recognitions for the selected year 
         const { data: recognitions } = await supabase
           .from('recognitions')
-          .select('created_at, receiver_id')
+          .select('created_at, receiver')
+          .eq('status', 'Approved')
           .gte('created_at', `${year}-01-01`)
           .lt('created_at', `${year + 1}-01-01`);
         
@@ -211,7 +213,7 @@ export default function RecognitionRateAnalytics() {
         let filteredRecognitions = recognitionList;
         if (department !== "Department") {
           const employeeIds = employeeList.map(e => e.id);
-          filteredRecognitions = recognitionList.filter(r => employeeIds.includes(r.receiver_id));
+          filteredRecognitions = recognitionList.filter(r => employeeIds.includes(r.receiver));
         }
 
         // Prepare chart data
@@ -269,7 +271,7 @@ export default function RecognitionRateAnalytics() {
           const deptEmployees = employeeList.filter(e => e.department === dept);
           const deptEmployeeIds = deptEmployees.map(e => e.id);
           
-          let deptRecognitions = recognitionList.filter(r => deptEmployeeIds.includes(r.receiver_id));
+          let deptRecognitions = recognitionList.filter(r => deptEmployeeIds.includes(r.receiver));
           
           if (month !== "Month") {
             const monthIndex = months.indexOf(month) - 1;
@@ -467,7 +469,7 @@ export default function RecognitionRateAnalytics() {
                     <tr>
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Recognition Rate</th>
-                      <th className="px-2 py-1 text-left">Recognition Count</th>
+                      <th className="px-2 py-1 text-left">Total Recognition</th>
                       <th className="px-2 py-1 text-left">Total Employees</th>
                     </tr>
                   </thead>

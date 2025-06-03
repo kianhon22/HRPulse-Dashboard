@@ -426,7 +426,7 @@ export default function CreateSurveyPage() {
                       selected={startDate}
                       onSelect={setStartDate}
                       initialFocus
-                      // disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     />
                   </PopoverContent>
                 </Popover>
@@ -448,11 +448,11 @@ export default function CreateSurveyPage() {
                       selected={endDate}
                       onSelect={setEndDate}
                       initialFocus
-                      // disabled={(date) => {
-                      //   const today = new Date(new Date().setHours(0, 0, 0, 0));
-                      //   if (date < today) return true;
-                      //   return startDate ? date < startDate : false;
-                      // }}
+                      disabled={(date) => {
+                        const today = new Date(new Date().setHours(0, 0, 0, 0));
+                        if (date < today) return true;
+                        return startDate ? date < startDate : false;
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
@@ -615,12 +615,12 @@ export default function CreateSurveyPage() {
             <AlertDialogDescription>
               You have already created 4 surveys for {startDate?.getFullYear()}. 
               We recommend maintaining only 4 quarterly surveys per year for optimal employee engagement. 
-              Would you like to continue anyway?
+              {/* Would you like to continue anyway? */}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            {/* <AlertDialogAction 
               onClick={() => {
                 setShowQuarterlyAlert(false);
                 setIsSubmitting(true);
@@ -629,7 +629,7 @@ export default function CreateSurveyPage() {
               }}
             >
               Continue Anyway
-            </AlertDialogAction>
+            </AlertDialogAction> */}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

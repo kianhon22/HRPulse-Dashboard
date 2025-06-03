@@ -66,7 +66,7 @@ export default function FeedbackPage() {
             status === "Closed" ? "text-red-700 bg-red-100" :
             status === "Draft" ? "text-gray-700 bg-gray-100" :
             status === "Scheduled" ? "text-yellow-700 bg-yellow-100" :
-            "text-gray-700 bg-gray-100"
+            "text-gray-800 bg-gray-200"
           }`}>
             {status}
           </span>
@@ -190,7 +190,7 @@ export default function FeedbackPage() {
           <Button 
             variant="outline" 
             onClick={() => router.push('/surveys/templates')}
-            className="border-2"
+            className="border-1 border-black"
           >
             <FileText className="mr-2 h-4 w-4" />
             Templates

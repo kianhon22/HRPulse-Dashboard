@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
     const response = await result.response;
     const text = response.text();
         
-    console.log(text);
     // Split recommendations by the unique separator
     const parts = text.split('###RECOMMENDATION###');
     const recommendations = parts
@@ -34,7 +33,6 @@ export async function POST(request: NextRequest) {
       })
       .slice(0, 5); // Take exactly 5 recommendations
         
-    console.log(recommendations);
     return NextResponse.json({ 
       recommendations: recommendations.length > 0 ? recommendations : ['Unable to generate recommendations'] 
     });

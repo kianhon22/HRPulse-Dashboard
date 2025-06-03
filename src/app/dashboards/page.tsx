@@ -95,7 +95,7 @@ export default function AnalyticsDashboard() {
           .from('surveys')
           .select()
           .eq('is_template', false)
-          .gte('start_date', `${currentYear}-04-08`)
+          .gte('start_date', `${currentYear}-01-01`)
           .in('status', ['Active', 'Closed'])
           .order('created_at', { ascending: true })
         const surveyList = surveys || []
@@ -209,7 +209,8 @@ export default function AnalyticsDashboard() {
         // 7. Recognition Rate Calculation (recognitions for current year)
         const { data: recognitions } = await supabase
           .from('recognitions')
-          .select('created_at, receiver_id')
+          .select('created_at, receiver')
+          .eq('status', 'Approved')
           .gte('created_at', `${currentYear}-01-01`)
           .lt('created_at', `${currentYear + 1}-01-01`)
 

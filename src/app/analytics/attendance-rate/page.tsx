@@ -508,9 +508,9 @@ export default function AttendanceRateAnalytics() {
                     <tr>
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Attendance Rate</th>
-                      <th className="px-2 py-1 text-left">Attendance Count</th>
+                      <th className="px-2 py-1 text-left">Total Attendance</th>
                       <th className="px-2 py-1 text-left">Maximum Attendances</th>
-                      <th className="px-2 py-1 text-left">Employee Count</th>
+                      <th className="px-2 py-1 text-left">Total Employee</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -124,7 +124,7 @@ const exportToCSV = (data: any, filters: any) => {
       !['department', 'responseRate', 'respondersEmployees'].includes(key)
     );
     
-    csvData.push(['Department', 'Response Rate (%)', 'Responders/Employees', ...categoryColumns.map(cat => `${cat} (%)`)]);
+    csvData.push(['Department', 'Response Rate (%)', 'Responders/Total Employees', ...categoryColumns.map(cat => `${cat} (%)`)]);
     data.tableData.forEach((row: any) => {
       csvData.push([
         row.department, 
@@ -614,7 +614,7 @@ export default function SurveyResponseAnalytics() {
                     <tr>
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Response Rate</th>
-                      <th className="px-2 py-1 text-left">Responders/Employees</th>
+                      <th className="px-2 py-1 text-left">Responders/Total</th>
                       {/* Dynamic category columns */}
                       {tableData.length > 0 && Object.keys(tableData[0]).filter(key => 
                         !['department', 'responseRate', 'respondersEmployees'].includes(key)

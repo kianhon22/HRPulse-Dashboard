@@ -124,7 +124,7 @@ const exportToCSV = (data: any, filters: any) => {
       !['department', 'overall', 'responsesEmployees'].includes(key)
     );
     
-    csvData.push(['Department', 'Overall Score (%)', 'Responses/Employees', ...categoryColumns.map(cat => `${cat} (%)`)]);
+    csvData.push(['Department', 'Overall Score (%)', 'Responses/Total Employees', ...categoryColumns.map(cat => `${cat} (%)`)]);
     data.tableData.forEach((row: any) => {
       csvData.push([
         row.department, 
@@ -620,7 +620,7 @@ export default function EngagementScoreAnalytics() {
                     <tr>
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Overall Score</th>
-                      <th className="px-2 py-1 text-left">Responses/Employees</th>
+                      <th className="px-2 py-1 text-left">Responses/Total</th>
                       {/* Dynamic category columns */}
                       {tableData.length > 0 && Object.keys(tableData[0]).filter(key => 
                         !['department', 'overall', 'responsesEmployees'].includes(key)
