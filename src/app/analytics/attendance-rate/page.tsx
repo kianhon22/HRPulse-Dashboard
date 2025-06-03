@@ -51,17 +51,30 @@ const CustomXAxisTick = (props: any) => {
 // Function to get AI recommendations
 const getAIRecommendations = async (data: any) => {
   try {
-    const prompt = `Based on the following attendance rate analytics data, provide 3-5 specific, actionable recommendations to improve attendance rates. Be concise and practical.
+    const prompt = `Analyze the attendance rate data and provide exactly 5 concise, actionable recommendations (max 3-4 sentences each).
 
-Data:
-- Overall attendance rate: ${data.overallRate}%
+Data Summary:
+- Overall Attendance Rate: ${data.overallRate}%
 - Year: ${data.year}
-- Month filter: ${data.month}
-- Department filter: ${data.department}
-- Department breakdown: ${JSON.stringify(data.departmentData)}
-- Chart data: ${JSON.stringify(data.chartData)}
+- Month Filter: ${data.month}
+- Department Filter: ${data.department}
 
-Focus on areas with lower attendance rates and provide specific improvement strategies.`;
+FORMATTING RULES:
+1. Separate each recommendation with "###RECOMMENDATION###"
+2. Keep each recommendation to 3-4 sentences maximum
+3. Use **bold** ONLY for specific numbers, percentages, timeframes, or multi-word important actions (NOT for single words like department names)
+4. If steps are needed, use: 1) Step one 2) Step two 3) Step three
+5. Start each recommendation with a clear action verb
+6. Do NOT use quotation marks around department names or month names
+7. Write naturally without excessive capitalization
+
+Example Format:
+###RECOMMENDATION###
+**Implement flexible scheduling** for departments with **attendance below 85%**. Offer: 1) Remote work options 2) Flexible start times 3) Compressed work weeks. Monitor improvement over **30 days** and adjust policies accordingly.
+###RECOMMENDATION###
+**Address transportation issues** causing Monday and Friday absences. Provide: 1) Transportation subsidies 2) Carpooling programs 3) Shuttle services. Target **attendance above 90%** on these critical days.
+
+Generate 5 specific recommendations based on the provided data:`;
 
     const response = await fetch('/api/ai-recommendations', {
       method: 'POST',
@@ -260,7 +273,7 @@ export default function AttendanceRateAnalytics() {
         }
 
         // Prepare table data by department
-        const deptData = [];
+        const deptData: any[] = [];
         const allDepartments = departments.filter(d => d !== "Department");
         
         for (const dept of allDepartments) {
@@ -337,22 +350,31 @@ export default function AttendanceRateAnalytics() {
         };
         setOverallData(newOverallData);
 
-        // Get AI recommendations
-        setLoadingRecommendations(true);
-        const recommendations = await getAIRecommendations({
-          overallRate,
-          year,
-          month,
-          department,
-          departmentData: deptData,
-          chartData: currentChartData
-        });
-        setRecommendations(recommendations);
-        setLoadingRecommendations(false);
+        // Load AI recommendations independently (after main data is loaded)
+        const loadAIRecommendations = async () => {
+          try {
+            setLoadingRecommendations(true);
+            const recommendations = await getAIRecommendations({
+              overallRate,
+              year,
+              month,
+              department,
+              departmentData: deptData,
+              chartData: currentChartData
+            });
+            setRecommendations(recommendations);
+          } catch (error) {
+            console.error("Error getting AI recommendations:", error);
+          } finally {
+            setLoadingRecommendations(false);
+          }
+        };
+
+        // Load recommendations in background
+        loadAIRecommendations();
 
       } catch (error) {
         console.error("Error fetching attendance data:", error);
-        setLoadingRecommendations(false);
       } finally {
         setLoading(false);
       }
@@ -518,10 +540,23 @@ export default function AttendanceRateAnalytics() {
           {loadingRecommendations ? (
             <div className="flex items-center justify-center h-20">Generating recommendations...</div>
           ) : (
-            <div className="space-y-3">
+            <div className="max-h-96 overflow-y-auto space-y-3">
               {recommendations.map((recommendation, index) => (
-                <div key={index} className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                  <p className="text-sm text-gray-700">{recommendation.trim()}</p>
+                <div key={index} className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                  <div className="flex items-start">
+                    <span className="flex-shrink-0 w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
+                      {index + 1}
+                    </span>
+                    <p 
+                      className="text-sm text-gray-700 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: recommendation.trim()
+                          .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-purple-700">$1</strong>')
+                          // .replace(/(\d+\))/g, '<span class="font-medium text-purple-600">$1</span>')
+                          .replace(/\n/g, '<br>')
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

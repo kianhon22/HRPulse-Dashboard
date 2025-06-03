@@ -61,7 +61,7 @@ export default function FeedbackPage() {
       cell: ({ row }) => {
         const status = row.getValue("status") as string
         return (
-          <div className={`capitalize font-medium px-2 py-1 rounded-md text-sm ${
+          <span className={`capitalize font-medium px-2 py-1 rounded-md text-sm ${
             status === "Active" ? "text-green-700 bg-green-100" :
             status === "Closed" ? "text-red-700 bg-red-100" :
             status === "Draft" ? "text-gray-700 bg-gray-100" :
@@ -69,7 +69,7 @@ export default function FeedbackPage() {
             "text-gray-700 bg-gray-100"
           }`}>
             {status}
-          </div>
+          </span>
         )
       },
     },
@@ -137,15 +137,7 @@ export default function FeedbackPage() {
         { label: "Closed", value: "Closed" },
         { label: "Deleted", value: "Deleted" },
       ],
-    },
-    // {
-    //   id: "type",
-    //   title: "Type",
-    //   options: [
-    //     { label: "Text", value: "Text" },
-    //     { label: "Rating", value: "Rating" },
-    //   ],
-    // },
+    }
   ]
 
   const fetchSurveys = async (year: string) => {

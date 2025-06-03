@@ -50,17 +50,30 @@ const CustomXAxisTick = (props: any) => {
 // Function to get AI recommendations
 const getAIRecommendations = async (data: any) => {
   try {
-    const prompt = `Based on the following engagement score analytics data, provide exactly 6 specific, actionable recommendations to improve employee engagement scores. Each recommendation should be well-elaborated and detailed to solve/enhance the issues. Format as numbered points (1., 2., 3., etc.) with comprehensive explanations.
+    const prompt = `Analyze the engagement score data and provide exactly 5 concise, actionable recommendations (max 3-4 sentences each).
 
-Data:
-- Overall engagement score: ${data.overallScore}%
+Data Summary:
+- Overall Score: ${data.overallScore}%
 - Year: ${data.year}
-- Department filter: ${data.department}
-- Survey filter: ${data.survey}
-- Department breakdown: ${JSON.stringify(data.departmentData)}
-- Chart data: ${JSON.stringify(data.chartData)}
+- Department Filter: ${data.department}
+- Survey Filter: ${data.survey}
 
-Focus on areas with lower engagement scores by category and provide specific strategies to improve engagement. Consider factors like leadership, culture, growth opportunities, and communication. Each point should be detailed and actionable.`;
+FORMATTING RULES:
+1. Separate each recommendation with "###RECOMMENDATION###"
+2. Keep each recommendation to 3-4 sentences maximum
+3. Use **bold** ONLY for specific numbers, percentages, timeframes, or multi-word important actions (NOT for single words like department names)
+4. If steps are needed, use: 1) Step one 2) Step two 3) Step three
+5. Start each recommendation with a clear action verb
+6. Do NOT use quotation marks around department names or survey names
+7. Write naturally without excessive capitalization
+
+Example Format:
+###RECOMMENDATION###
+**Implement targeted training** for Marketing department showing **65% engagement**. Focus on: 1) Leadership communication skills 2) Team building activities 3) Clear goal setting. This should increase scores by **15-20%** within **3 months**.
+###RECOMMENDATION###
+**Address workload concerns** in departments scoring below **70%**. Conduct 1) Individual workload assessments 2) Resource reallocation 3) Hiring additional support staff. Monitor progress monthly.
+
+Generate 5 specific recommendations based on the provided data:`;
 
     const response = await fetch('/api/ai-recommendations', {
       method: 'POST',
@@ -71,10 +84,10 @@ Focus on areas with lower engagement scores by category and provide specific str
     });
 
     const result = await response.json();
-    return result.recommendations || ['Unable to generate recommendations at this time'];
+    return result.recommendations || ['Unable to generate recommendations'];
   } catch (error) {
     console.error('Error getting AI recommendations:', error);
-    return ['Unable to generate recommendations at this time'];
+    return ['Unable to generate recommendations'];
   }
 };
 
@@ -353,7 +366,7 @@ export default function EngagementScoreAnalytics() {
         }
 
         // Prepare table data by department with categories
-        const deptData = [];
+        const deptData: any[] = [];
         const allDepartments = departments.filter(d => d !== "Department");
         
         for (const dept of allDepartments) {
@@ -434,22 +447,31 @@ export default function EngagementScoreAnalytics() {
         };
         setOverallData(newOverallData);
 
-        // Get AI recommendations
-        setLoadingRecommendations(true);
-        const recommendations = await getAIRecommendations({
-          overallScore,
-          year,
-          department,
-          survey,
-          departmentData: deptData,
-          chartData: chartData
-        });
-        setRecommendations(recommendations);
-        setLoadingRecommendations(false);
+        // Load AI recommendations independently (after main data is loaded)
+        const loadAIRecommendations = async () => {
+          try {
+            setLoadingRecommendations(true);
+            const recommendations = await getAIRecommendations({
+              overallScore,
+              year,
+              department,
+              survey,
+              departmentData: deptData,
+              chartData: chartData
+            });
+            setRecommendations(recommendations);
+          } catch (error) {
+            console.error("Error getting AI recommendations:", error);
+          } finally {
+            setLoadingRecommendations(false);
+          }
+        };
+
+        // Load recommendations in background
+        loadAIRecommendations();
 
       } catch (error) {
         console.error("Error fetching engagement data:", error);
-        setLoadingRecommendations(false);
       } finally {
         setLoading(false);
       }
@@ -638,10 +660,23 @@ export default function EngagementScoreAnalytics() {
           {loadingRecommendations ? (
             <div className="flex items-center justify-center h-20">Generating recommendations...</div>
           ) : (
-            <div className="space-y-3">
+            <div className="max-h-96 overflow-y-auto space-y-3">
               {recommendations.map((recommendation, index) => (
-                <div key={index} className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                  <p className="text-sm text-gray-700">{recommendation.trim()}</p>
+                <div key={index} className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                  <div className="flex items-start">
+                    <span className="flex-shrink-0 w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
+                      {index + 1}
+                    </span>
+                    <p 
+                      className="text-sm text-gray-700 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: recommendation.trim()
+                          .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-purple-700">$1</strong>')
+                          // .replace(/(\d+\))/g, '<span class="font-medium text-purple-600">$1</span>')
+                          .replace(/\n/g, '<br>')
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

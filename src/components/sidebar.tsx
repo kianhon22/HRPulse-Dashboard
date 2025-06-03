@@ -182,7 +182,7 @@ export function Sidebar({
               </div>
             )
           }
-          const isActive = pathname === item.href
+          const isActive = pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}

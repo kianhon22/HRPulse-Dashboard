@@ -50,17 +50,30 @@ const CustomXAxisTick = (props: any) => {
 // Function to get AI recommendations
 const getAIRecommendations = async (data: any) => {
   try {
-    const prompt = `Based on the following recognition rate analytics data, provide 3-5 specific, actionable recommendations to improve employee recognition rates. Be concise and practical.
+    const prompt = `Analyze the recognition rate data and provide exactly 5 concise, actionable recommendations (max 3-4 sentences each).
 
-Data:
-- Overall recognition rate: ${data.overallRate}%
+Data Summary:
+- Overall Recognition Rate: ${data.overallRate}%
 - Year: ${data.year}
-- Month filter: ${data.month}
-- Department filter: ${data.department}
-- Department breakdown: ${JSON.stringify(data.departmentData)}
-- Chart data: ${JSON.stringify(data.chartData)}
+- Month Filter: ${data.month}
+- Department Filter: ${data.department}
 
-Focus on areas with lower recognition rates and provide specific strategies to increase employee recognition and engagement.`;
+FORMATTING RULES:
+1. Separate each recommendation with "###RECOMMENDATION###"
+2. Keep each recommendation to 3-4 sentences maximum
+3. Use **bold** ONLY for specific numbers, percentages, timeframes, or multi-word important actions (NOT for single words like department names)
+4. If steps are needed, use: 1) Step one 2) Step two 3) Step three
+5. Start each recommendation with a clear action verb
+6. Do NOT use quotation marks around department names or month names
+7. Write naturally without excessive capitalization
+
+Example Format:
+###RECOMMENDATION###
+**Launch peer recognition program** for departments with **recognition rates below 30%**. Implement: 1) Monthly recognition quotas 2) Digital recognition platform 3) Public appreciation boards. Target **50% participation** within **60 days**.
+###RECOMMENDATION###
+**Train managers** in departments showing low recognition activity. Focus on: 1) Recognition best practices 2) Timely feedback delivery 3) Meaningful appreciation techniques. Schedule **bi-weekly check-ins** to monitor progress.
+
+Generate 5 specific recommendations based on the provided data:`;
 
     const response = await fetch('/api/ai-recommendations', {
       method: 'POST',
@@ -249,7 +262,7 @@ export default function RecognitionRateAnalytics() {
         }
 
         // Prepare table data by department
-        const deptData = [];
+        const deptData: any[] = [];
         const allDepartments = departments.filter(d => d !== "Department");
         
         for (const dept of allDepartments) {
@@ -296,22 +309,31 @@ export default function RecognitionRateAnalytics() {
         };
         setOverallData(newOverallData);
 
-        // Get AI recommendations
-        setLoadingRecommendations(true);
-        const recommendations = await getAIRecommendations({
-          overallRate,
-          year,
-          month,
-          department,
-          departmentData: deptData,
-          chartData: currentChartData
-        });
-        setRecommendations(recommendations);
-        setLoadingRecommendations(false);
+        // Load AI recommendations independently (after main data is loaded)
+        const loadAIRecommendations = async () => {
+          try {
+            setLoadingRecommendations(true);
+            const recommendations = await getAIRecommendations({
+              overallRate,
+              year,
+              month,
+              department,
+              departmentData: deptData,
+              chartData: currentChartData
+            });
+            setRecommendations(recommendations);
+          } catch (error) {
+            console.error("Error getting AI recommendations:", error);
+          } finally {
+            setLoadingRecommendations(false);
+          }
+        };
+
+        // Load recommendations in background
+        loadAIRecommendations();
 
       } catch (error) {
         console.error("Error fetching recognition data:", error);
-        setLoadingRecommendations(false);
       } finally {
         setLoading(false);
       }
@@ -475,10 +497,23 @@ export default function RecognitionRateAnalytics() {
           {loadingRecommendations ? (
             <div className="flex items-center justify-center h-20">Generating recommendations...</div>
           ) : (
-            <div className="space-y-3">
+            <div className="max-h-96 overflow-y-auto space-y-3">
               {recommendations.map((recommendation, index) => (
-                <div key={index} className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                  <p className="text-sm text-gray-700">{recommendation.trim()}</p>
+                <div key={index} className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                  <div className="flex items-start">
+                    <span className="flex-shrink-0 w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
+                      {index + 1}
+                    </span>
+                    <p 
+                      className="text-sm text-gray-700 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: recommendation.trim()
+                          .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-purple-700">$1</strong>')
+                          // .replace(/(\d+\))/g, '<span class="font-medium text-purple-600">$1</span>')
+                          .replace(/\n/g, '<br>')
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
