@@ -158,7 +158,7 @@ export default function EditTemplatePage() {
             category: q.category,
             order: q.order || 0,
             db_id: q.id, // Store the database ID
-            type: q.type || "text"
+            type: q.type
           }))
           
           setQuestions(formattedQuestions)
@@ -183,7 +183,7 @@ export default function EditTemplatePage() {
       question_text: "",
       category: category,
       order: questions.filter(q => q.category === category).length,
-      type: "text"
+      type: "rating" as "text" | "rating"
     }
     setQuestions([...questions, newQuestion])
   }
@@ -208,7 +208,7 @@ export default function EditTemplatePage() {
         question_text: text,
         category: activeTab,
         order: questions.filter(q => q.category === activeTab).length + selectedSuggestions.indexOf(text),
-        type: "text" as "text" | "rating"
+        type: "rating" as "text" | "rating"
       }))
     ]
     setQuestions(newQuestions)
@@ -292,7 +292,8 @@ export default function EditTemplatePage() {
             .update({
               question: question.question_text,
               category: question.category,
-              order: question.order
+              order: question.order,
+              type: question.type
             })
             .eq('id', question.db_id)
           
@@ -309,7 +310,8 @@ export default function EditTemplatePage() {
               survey_id: templateId,
               question: question.question_text,
               category: question.category,
-              order: question.order
+              order: question.order,
+              type: question.type
             })
           
           if (error) {

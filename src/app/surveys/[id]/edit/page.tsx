@@ -180,7 +180,7 @@ export default function EditSurveyPage() {
           category: q.category,
           order: q.order || 0,
           dbId: q.id,
-          type: q.type || "text"
+          type: q.type
         }))
         
         setQuestions(formattedQuestions)
@@ -215,12 +215,12 @@ export default function EditSurveyPage() {
     }))
   }
   
-  const handleTypeChange = (value: "Text" | "Rating") => {
-    setSurvey(prev => ({
-      ...prev,
-      type: value
-    }))
-  }
+  // const handleTypeChange = (value: "Text" | "Rating") => {
+  //   setSurvey(prev => ({
+  //     ...prev,
+  //     type: value
+  //   }))
+  // }
   
   const addQuestion = (category: string) => {
     const newQuestion: Question = {
@@ -253,7 +253,7 @@ export default function EditSurveyPage() {
         question_text: text,
         category: activeTab,
         order: questions.filter(q => q.category === activeTab).length + selectedSuggestions.indexOf(text),
-        type: "text" as "text" | "rating"
+        type: "rating" as "text" | "rating"
       }))
     ]
     setQuestions(newQuestions)

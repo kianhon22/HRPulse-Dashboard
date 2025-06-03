@@ -426,7 +426,7 @@ export default function CreateSurveyPage() {
                       selected={startDate}
                       onSelect={setStartDate}
                       initialFocus
-                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      // disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     />
                   </PopoverContent>
                 </Popover>
@@ -448,11 +448,11 @@ export default function CreateSurveyPage() {
                       selected={endDate}
                       onSelect={setEndDate}
                       initialFocus
-                      disabled={(date) => {
-                        const today = new Date(new Date().setHours(0, 0, 0, 0));
-                        if (date < today) return true;
-                        return startDate ? date < startDate : false;
-                      }}
+                      // disabled={(date) => {
+                      //   const today = new Date(new Date().setHours(0, 0, 0, 0));
+                      //   if (date < today) return true;
+                      //   return startDate ? date < startDate : false;
+                      // }}
                     />
                   </PopoverContent>
                 </Popover>

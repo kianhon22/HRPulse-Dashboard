@@ -113,7 +113,7 @@ export default function CreateTemplatePage() {
       question_text: "",
       category: category,
       order: questions.filter(q => q.category === category).length,
-      type: "text"
+      type: "rating" as "text" | "rating"
     }
     setQuestions([...questions, newQuestion])
   }
@@ -138,7 +138,7 @@ export default function CreateTemplatePage() {
         question_text: text,
         category: activeTab,
         order: questions.filter(q => q.category === activeTab).length + selectedSuggestions.indexOf(text),
-        type: "text" as "text" | "rating"
+        type: "rating" as "text" | "rating"
       }))
     ]
     setQuestions(newQuestions)
@@ -201,7 +201,8 @@ export default function CreateTemplatePage() {
         survey_id: template.id,
         question: q.question_text,
         category: q.category,
-        order: q.order
+        order: q.order,
+        type: q.type
       }))
 
       const { error: questionsError } = await supabase
