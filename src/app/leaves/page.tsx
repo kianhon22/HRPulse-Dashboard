@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus, ThumbsUp, ShieldCheck, ShieldX, Download, X } from "lucide-react"
+import { Plus, ThumbsUp, ShieldCheck, ShieldX, Download, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ColumnDef } from "@tanstack/react-table"
 import { supabase } from "@/lib/supabase"
@@ -132,7 +132,7 @@ const getStatusIcon = (status: string) => {
     case 'Approved': return <ShieldCheck className="mr-1 h-3 w-3" />
     case 'Rejected': return <ShieldX className="mr-1 h-3 w-3" />
     case 'Pending': return <ThumbsUp className="mr-1 h-3 w-3" />
-    case 'Cancelled': return <X className="mr-1 h-3 w-3" />
+    case 'Cancelled': return <Trash2 className="mr-1 h-3 w-3" />
     default: return null
   }
 }

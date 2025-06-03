@@ -225,7 +225,7 @@ export default function RecognitionRateAnalytics() {
               return getMonth(d) === m && getYear(d) === year;
             }).length;
             
-            const rate = totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(1)) : 0;
+            const rate = totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(2)) : 0;
             
             monthlyData.push({
               period: format(new Date(year, m, 1), 'MMM'),
@@ -249,7 +249,7 @@ export default function RecognitionRateAnalytics() {
               r.created_at.startsWith(dayStr)
             ).length;
             
-            const rate = totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(1)) : 0;
+            const rate = totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(2)) : 0;
             
             dailyData.push({
               period: format(day, 'MMM dd'),
@@ -279,7 +279,7 @@ export default function RecognitionRateAnalytics() {
             });
           }
           
-          const rate = deptEmployees.length > 0 ? Number((deptRecognitions.length / deptEmployees.length * 100).toFixed(1)) : 0;
+          const rate = deptEmployees.length > 0 ? Number((deptRecognitions.length / deptEmployees.length * 100).toFixed(2)) : 0;
           
           deptData.push({
             department: dept,
@@ -300,7 +300,7 @@ export default function RecognitionRateAnalytics() {
           });
         }
         
-        const overallRate = totalEmployees > 0 ? Number((overallRecognitions.length / totalEmployees * 100).toFixed(1)) : 0;
+        const overallRate = totalEmployees > 0 ? Number((overallRecognitions.length / totalEmployees * 100).toFixed(2)) : 0;
         
         const newOverallData = {
           rate: overallRate,

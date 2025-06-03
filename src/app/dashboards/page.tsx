@@ -142,9 +142,9 @@ export default function AnalyticsDashboard() {
         // Engagement Score Calculation
         const avgLatest = latestAnswers.length > 0 ? latestAnswers.reduce((sum, a) => sum + Number(a.response), 0) / latestAnswers.length : 0
         const avgLast = lastAnswers.length > 0 ? lastAnswers.reduce((sum, a) => sum + Number(a.response), 0) / lastAnswers.length : 0
-        const engagementScore = (avgLatest * 20).toFixed(1)
-        const engagementScoreLast = (avgLast * 20).toFixed(1)
-        const engagementTrend = (Number(engagementScore) - Number(engagementScoreLast)).toFixed(1)
+        const engagementScore = (avgLatest * 20).toFixed(2)
+        const engagementScoreLast = (avgLast * 20).toFixed(2)
+        const engagementTrend = (Number(engagementScore) - Number(engagementScoreLast)).toFixed(2)
 
         // 5. Survey Response Calculation
         // Get all answers for latest and last survey (any type)
@@ -167,9 +167,9 @@ export default function AnalyticsDashboard() {
         // Unique employee responses
         const uniqueLatest = Array.from(new Set(latestSurveyResponses.map(r => r.user_id)))
         const uniqueLast = Array.from(new Set(lastSurveyResponses.map(r => r.user_id)))
-        const surveyResponseRate = totalEmployees > 0 ? (uniqueLatest.length / totalEmployees * 100).toFixed(1) : '0.0'
-        const surveyResponseRateLast = totalEmployees > 0 ? (uniqueLast.length / totalEmployees * 100).toFixed(1) : '0.0'
-        const surveyResponseTrend = (Number(surveyResponseRate) - Number(surveyResponseRateLast)).toFixed(1)
+        const surveyResponseRate = totalEmployees > 0 ? (uniqueLatest.length / totalEmployees * 100).toFixed(2) : '0.0'
+        const surveyResponseRateLast = totalEmployees > 0 ? (uniqueLast.length / totalEmployees * 100).toFixed(2) : '0.0'
+        const surveyResponseTrend = (Number(surveyResponseRate) - Number(surveyResponseRateLast)).toFixed(2)
 
         // 6. Attendance Rate Calculation (current month vs last month)
         const now = new Date()
@@ -202,9 +202,9 @@ export default function AnalyticsDashboard() {
         }).length
         const possibleAttendancesThisMonth = totalEmployees * workdaysThisMonth
         const possibleAttendancesLastMonth = totalEmployees * workdaysLastMonth
-        const attendanceRate = possibleAttendancesThisMonth > 0 ? (attendanceThisMonth / possibleAttendancesThisMonth * 100).toFixed(1) : '0.0'
-        const attendanceRateLast = possibleAttendancesLastMonth > 0 ? (attendanceLastMonth / possibleAttendancesLastMonth * 100).toFixed(1) : '0.0'
-        const attendanceTrend = (Number(attendanceRate) - Number(attendanceRateLast)).toFixed(1)
+        const attendanceRate = possibleAttendancesThisMonth > 0 ? (attendanceThisMonth / possibleAttendancesThisMonth * 100).toFixed(2) : '0.0'
+        const attendanceRateLast = possibleAttendancesLastMonth > 0 ? (attendanceLastMonth / possibleAttendancesLastMonth * 100).toFixed(2) : '0.0'
+        const attendanceTrend = (Number(attendanceRate) - Number(attendanceRateLast)).toFixed(2)
 
         // 7. Recognition Rate Calculation (recognitions for current year)
         const { data: recognitions } = await supabase
@@ -225,9 +225,9 @@ export default function AnalyticsDashboard() {
           return d >= lastMonthStart && d <= lastMonthEnd
         })
 
-        const recognitionRate = totalEmployees > 0 ? (recognitionThisMonth.length / totalEmployees * 100).toFixed(1) : '0.0';
-        const recognitionRateLast = totalEmployees > 0 ? (recognitionLastMonth.length / totalEmployees * 100).toFixed(1) : '0.0';
-        const recognitionTrend = (Number(recognitionRate) - Number(recognitionRateLast)).toFixed(1);
+        const recognitionRate = totalEmployees > 0 ? (recognitionThisMonth.length / totalEmployees * 100).toFixed(2) : '0.0';
+        const recognitionRateLast = totalEmployees > 0 ? (recognitionLastMonth.length / totalEmployees * 100).toFixed(2) : '0.0';
+        const recognitionTrend = (Number(recognitionRate) - Number(recognitionRateLast)).toFixed(2);
 
         // Update metrics
         setMetrics([
@@ -287,7 +287,7 @@ export default function AnalyticsDashboard() {
             const avg = answers.length > 0 ? answers.reduce((sum, a) => sum + Number(a.response), 0) / answers.length : 0
             return {
               period: `${format(parseISO(survey.start_date), 'MMM d')} - ${format(parseISO(survey.end_date), 'MMM d')}`,
-              score: (avg * 20).toFixed(1),
+              score: (avg * 20).toFixed(2),
             }
           })
         )
@@ -303,7 +303,7 @@ export default function AnalyticsDashboard() {
             const unique = Array.from(new Set((answers || []).map(a => a.user_id)))
             return {
               period: `${format(parseISO(survey.start_date), 'MMM d')} - ${format(parseISO(survey.end_date), 'MMM d')}`,
-              responseRate: totalEmployees > 0 ? (unique.length / totalEmployees * 100).toFixed(1) : '0.0',
+              responseRate: totalEmployees > 0 ? (unique.length / totalEmployees * 100).toFixed(2) : '0.0',
               count: unique.length,
             }
           })
@@ -324,7 +324,7 @@ export default function AnalyticsDashboard() {
           }).length
           attendanceYearData.push({
             month: format(monthDate, 'MMM'),
-            attendanceRate: possible > 0 ? (count / possible * 100).toFixed(1) : '0.0',
+            attendanceRate: possible > 0 ? (count / possible * 100).toFixed(2) : '0.0',
             count,
           })
         }
@@ -340,7 +340,7 @@ export default function AnalyticsDashboard() {
           }).length
           recognitionYearData.push({
             month: format(monthDate, 'MMM'),
-            recognitionRate: totalEmployees > 0 ? (count / totalEmployees * 100).toFixed(1) : '0.0',
+            recognitionRate: totalEmployees > 0 ? (count / totalEmployees * 100).toFixed(2) : '0.0',
             count,
           })
         }
@@ -360,10 +360,6 @@ export default function AnalyticsDashboard() {
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
         </div>
-        <Button className="cursor-pointer">
-          <Download className="mr-2 h-4 w-4" />
-          Export Report
-        </Button>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric, idx) => (

@@ -291,7 +291,7 @@ export default function SurveyResponseAnalytics() {
               // Count unique responders
               const uniqueResponders = new Set(responseList.map(r => r.user_id)).size;
               const currentEmployeeCount = department !== "Department" ? employeeList.length : totalEmployees;
-              const responseRate = currentEmployeeCount > 0 ? Number(((uniqueResponders / currentEmployeeCount) * 100).toFixed(1)) : 0;
+              const responseRate = currentEmployeeCount > 0 ? Number(((uniqueResponders / currentEmployeeCount) * 100).toFixed(2)) : 0;
 
               chartData.push({
                 title: surveyItem.title,
@@ -332,7 +332,7 @@ export default function SurveyResponseAnalytics() {
                 
                 const responseList = responses || [];
                 const uniqueResponders = new Set(responseList.map(r => r.user_id)).size;
-                const responseRate = deptEmployees.length > 0 ? Number(((uniqueResponders / deptEmployees.length) * 100).toFixed(1)) : 0;
+                const responseRate = deptEmployees.length > 0 ? Number(((uniqueResponders / deptEmployees.length) * 100).toFixed(2)) : 0;
 
                 chartData.push({
                   department: dept,
@@ -409,12 +409,12 @@ export default function SurveyResponseAnalytics() {
           }
           
           const responseRate = deptEmployees.length > 0 ? 
-            Number(((deptUniqueResponders.size / deptEmployees.length) * 100).toFixed(1)) : 0;
+            Number(((deptUniqueResponders.size / deptEmployees.length) * 100).toFixed(2)) : 0;
           
           // Calculate category percentages
           const categories: { [key: string]: number } = {};
           for (const [category, data] of Object.entries(categoryRates)) {
-            categories[category] = data.total > 0 ? Number(((data.responses / data.total) * 100).toFixed(1)) : 0;
+            categories[category] = data.total > 0 ? Number(((data.responses / data.total) * 100).toFixed(2)) : 0;
           }
           
           deptData.push({
@@ -427,7 +427,7 @@ export default function SurveyResponseAnalytics() {
         setTableData(deptData);
 
         // Calculate overall data
-        const overallRate = totalEmployees > 0 ? Number(((totalUniqueResponders / totalEmployees) * 100).toFixed(1)) : 0;
+        const overallRate = totalEmployees > 0 ? Number(((totalUniqueResponders / totalEmployees) * 100).toFixed(2)) : 0;
         
         const newOverallData = {
           rate: overallRate,

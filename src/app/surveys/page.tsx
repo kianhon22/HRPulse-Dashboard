@@ -190,6 +190,7 @@ export default function FeedbackPage() {
           <Button 
             variant="outline" 
             onClick={() => router.push('/surveys/templates')}
+            className="border-2"
           >
             <FileText className="mr-2 h-4 w-4" />
             Templates

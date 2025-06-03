@@ -30,10 +30,18 @@ const columns: ColumnDef<Attendance>[] = [
   },
   {
     accessorKey: "check_in",
+    header: "Date",
+    cell: ({ row }) => {
+      const checkIn = row.getValue("check_in") as string
+      return format(new Date(checkIn), "dd MMM yyyy")
+    },
+  },
+  {
+    accessorKey: "check_in",
     header: "Check In",
     cell: ({ row }) => {
       const checkIn = row.getValue("check_in") as string
-      return format(new Date(checkIn), "MMM dd, yyyy HH:mm")
+      return format(new Date(checkIn), "hh:mm a")
     },
   },
   {
@@ -41,8 +49,8 @@ const columns: ColumnDef<Attendance>[] = [
     header: "Check Out",
     cell: ({ row }) => {
       const checkOut = row.getValue("check_out") as string | null
-      if (!checkOut) return "Not checked out"
-      return format(new Date(checkOut), "MMM dd, yyyy HH:mm")
+      if (!checkOut) return "-"
+      return format(new Date(checkOut), "hh:mm a")
     },
   },
   {

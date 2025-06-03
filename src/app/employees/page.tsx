@@ -64,7 +64,7 @@ export default function EmployeesPage() {
       header: "Joining Date",
       cell: ({ row }) => {
         const date = row.getValue("join_company_date") as string
-        return date ? format(new Date(date), "MMM dd, yyyy") : "-"
+        return date ? format(new Date(date), "dd MMM yyyy") : "-"
       },
     },
     {
@@ -73,11 +73,11 @@ export default function EmployeesPage() {
       cell: ({ row }) => {
         const status = row.getValue("is_active")
         return (
-          <div className={`capitalize font-medium ${
-            status ? "text-green-600" : "text-red-600"
+          <span className={`capitalize font-medium px-2 py-1 rounded-md text-sm ${
+            status ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100"
           }`}>
             {status ? "Active" : "Inactive"}
-          </div>
+          </span>
         )
       },
     },

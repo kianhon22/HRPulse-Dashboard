@@ -291,7 +291,7 @@ export default function EngagementScoreAnalytics() {
 
               if (responseList.length > 0) {
                 const avgRating = responseList.reduce((sum, r) => sum + Number(r.response), 0) / responseList.length;
-                const engagementScore = Number((avgRating * 20).toFixed(1));
+                const engagementScore = Number((avgRating * 20).toFixed(2));
 
                 chartData.push({
                   title: surveyItem.title,
@@ -334,7 +334,7 @@ export default function EngagementScoreAnalytics() {
 
                 if (responseList.length > 0) {
                   const avgRating = responseList.reduce((sum, r) => sum + Number(r.response), 0) / responseList.length;
-                  const engagementScore = Number((avgRating * 20).toFixed(1));
+                  const engagementScore = Number((avgRating * 20).toFixed(2));
 
                   chartData.push({
                     department: dept,
@@ -420,12 +420,12 @@ export default function EngagementScoreAnalytics() {
             }
           }
           
-          const overallScore = deptTotalResponses > 0 ? Number((deptTotalScore / deptTotalResponses).toFixed(1)) : 0;
+          const overallScore = deptTotalResponses > 0 ? Number((deptTotalScore / deptTotalResponses).toFixed(2)) : 0;
           
           // Calculate category percentages
           const categories: { [key: string]: number } = {};
           for (const [category, data] of Object.entries(categoryScores)) {
-            categories[category] = data.count > 0 ? Number((data.total / data.count).toFixed(1)) : 0;
+            categories[category] = data.count > 0 ? Number((data.total / data.count).toFixed(2)) : 0;
           }
           
           deptData.push({
@@ -438,7 +438,7 @@ export default function EngagementScoreAnalytics() {
         setTableData(deptData);
 
         // Calculate overall data
-        const overallScore = totalResponses > 0 ? Number((totalScore / totalResponses).toFixed(1)) : 0;
+        const overallScore = totalResponses > 0 ? Number((totalScore / totalResponses).toFixed(2)) : 0;
         
         const newOverallData = {
           score: overallScore,

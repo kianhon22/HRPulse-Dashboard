@@ -239,7 +239,7 @@ export default function AttendanceRateAnalytics() {
             
             monthlyData.push({
               period: format(monthDate, 'MMM'),
-              rate: maximum > 0 ? Number((count / maximum * 100).toFixed(1)) : 0,
+              rate: maximum > 0 ? Number((count / maximum * 100).toFixed(2)) : 0,
               count,
               maximum
             });
@@ -263,7 +263,7 @@ export default function AttendanceRateAnalytics() {
               
               dailyData.push({
                 period: format(day, 'MMM dd'),
-                rate: totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(1)) : 0,
+                rate: totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(2)) : 0,
                 count
               });
             }
@@ -305,7 +305,7 @@ export default function AttendanceRateAnalytics() {
           }
           
           const maximum = deptEmployees.length * workdays;
-          const rate = maximum > 0 ? Number((deptAttendances.length / maximum * 100).toFixed(1)) : 0;
+          const rate = maximum > 0 ? Number((deptAttendances.length / maximum * 100).toFixed(2)) : 0;
           
           deptData.push({
             department: dept,
@@ -341,7 +341,7 @@ export default function AttendanceRateAnalytics() {
         }
         
         const totalMaximum = totalEmployees * totalWorkdays;
-        const overallRate = totalMaximum > 0 ? Number((overallAttendances.length / totalMaximum * 100).toFixed(1)) : 0;
+        const overallRate = totalMaximum > 0 ? Number((overallAttendances.length / totalMaximum * 100).toFixed(2)) : 0;
         
         const newOverallData = {
           rate: overallRate,
