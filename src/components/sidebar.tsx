@@ -141,7 +141,7 @@ export function Sidebar({
                   <span className={cn("transition-all duration-300", isCollapsed ? "opacity-0 w-0" : "opacity-100")}>Analytics</span>
                   <span className="ml-auto">
                     {(analyticsOpen || isAnalyticsActive)
-                      ? <ChevronDown className="h-4 w-4" />
+                      ? isCollapsed ? null : <ChevronDown className="h-4 w-4" />
                       : <ChevronRight className="h-4 w-4" />}
                   </span>
                 </div>

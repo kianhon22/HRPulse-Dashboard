@@ -103,8 +103,17 @@ export default function TemplatesPage() {
     router.push('/surveys/templates/create')
   }
 
-  // Get all unique categories
-  const categories = [...new Set(questions.map(q => q.category))].sort()
+  // Get all unique categories in the correct order
+  const categoryOrder = [
+    "Workload & Balance",
+    "Communication & Engagement", 
+    "Job Satisfaction",
+    "Career & Development",
+    "Recognition & Rewards"
+  ]
+  const categories = categoryOrder.filter(cat => 
+    questions.some(q => q.category === cat)
+  )
 
   if (loading) {
     return (

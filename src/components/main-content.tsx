@@ -16,13 +16,17 @@ export function MainContent({ children, isCollapsed }: MainContentProps) {
   // Determine if sidebar should be visible
   const isSidebarVisible = isAuthenticated && pathname !== "/login"
   
+  // Check if we're on analytics pages
+  const isAnalyticsPage = pathname?.startsWith("/analytics")
+  
   return (
     <main 
       className={cn(
         "flex-1 overflow-x-hidden transition-all duration-300",
         isSidebarVisible ? 
           isCollapsed ? 
-            "pl-16 lg:pl-22" : "pl-64 lg:pl-58" 
+            isAnalyticsPage ? "pl-14" : "pl-16 lg:pl-22" :       
+            isAnalyticsPage ? "pl-50" : "pl-64 lg:pl-58"
           : ""
       )}
     >

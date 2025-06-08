@@ -50,13 +50,28 @@ const CustomXAxisTick = (props: any) => {
 // Function to get AI recommendations
 const getAIRecommendations = async (data: any) => {
   try {
-    const prompt = `Analyze the engagement score data and provide exactly 5 concise, actionable recommendations (max 3-4 sentences each).
+    const prompt = `Analyze the engagement score data and provide exactly 4 concise, actionable recommendations (max 8 sentences each).
 
 Data Summary:
-- Overall Score: ${data.overallScore}%
+- Overall Engagement Score: ${data.overallScore}%
 - Year: ${data.year}
 - Department Filter: ${data.department}
 - Survey Filter: ${data.survey}
+- Total Surveys: ${data.totalSurveys}
+- Total Responses: ${data.totalResponses}
+
+Department Breakdown:
+${data.departmentData?.map((dept: any) => 
+  `- ${dept.department}: Overall Score ${dept.overall}%, Responses ${dept.responsesEmployees}${Object.keys(dept).filter(key => !['department', 'overall', 'responsesEmployees'].includes(key)).map(category => `, ${category} ${dept[category]}%`).join('')}`
+).join('\n')}
+
+Survey Performance (if showing multiple surveys):
+${data.chartData?.filter((item: any) => item.title)?.map((survey: any) => 
+  `- ${survey.title}: ${survey.score}% engagement score, ${survey.responses} responses (${survey.period})`
+).join('\n')}
+
+Category Analysis:
+Based on department data, identify categories with consistently low scores across departments that need attention.
 
 FORMATTING RULES:
 1. Separate each recommendation with "###RECOMMENDATION###"
@@ -375,6 +390,7 @@ export default function EngagementScoreAnalytics() {
           
           let deptTotalScore = 0;
           let deptTotalResponses = 0;
+          let deptUniqueResponders = new Set();
           const categoryScores: { [key: string]: { total: number, count: number } } = {};
 
           // Initialize all categories to ensure headers show
@@ -394,7 +410,7 @@ export default function EngagementScoreAnalytics() {
             if (ratingQuestions.length > 0) {
               const { data: responses } = await supabase
                 .from('survey_responses')
-                .select('response, question_id')
+                .select('response, question_id, user_id')
                 .in('question_id', ratingQuestions.map(q => q.id))
                 .in('user_id', deptEmployeeIds);
               
@@ -406,6 +422,9 @@ export default function EngagementScoreAnalytics() {
                 
                 deptTotalScore += engagementScore * responseList.length;
                 deptTotalResponses += responseList.length;
+                
+                // Track unique responders
+                responseList.forEach(r => deptUniqueResponders.add(r.user_id));
 
                 // Calculate category scores
                 for (const response of responseList) {
@@ -431,7 +450,7 @@ export default function EngagementScoreAnalytics() {
           deptData.push({
             department: dept,
             overall: overallScore,
-            responsesEmployees: `${deptTotalResponses}/${deptEmployees.length}`,
+            responsesEmployees: `${deptUniqueResponders.size}/${deptEmployees.length}`,
             ...categories
           });
         }
@@ -456,6 +475,8 @@ export default function EngagementScoreAnalytics() {
               year,
               department,
               survey,
+              totalSurveys: filteredSurveys.length,
+              totalResponses,
               departmentData: deptData,
               chartData: chartData
             });
@@ -560,15 +581,19 @@ export default function EngagementScoreAnalytics() {
           ) : chartData.length > 0 ? (
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 30, left: 80, bottom: 80 }}>
+                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 30, bottom: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey={survey === "Survey" ? "title" : "department"}
                     tick={<CustomXAxisTick />}
-                    height={60}
                     interval={0}
                     axisLine={{ stroke: '#666' }}
                     tickLine={{ stroke: '#666' }}
+                    label={{ 
+                      value: survey === "Survey" ? "Survey" : "Department",
+                      position: "bottom",
+                      offset: 15
+                    }}
                   />
                   <YAxis 
                     domain={[0, 100]} 
@@ -591,7 +616,7 @@ export default function EngagementScoreAnalytics() {
                   />
                   <Bar 
                     dataKey="score" 
-                    name="Engagement Score (%)" 
+                    name="Engagement Score" 
                     fill="#6A1B9A"
                   />
                 </BarChart>

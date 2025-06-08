@@ -48,15 +48,28 @@ const CustomXAxisTick = (props: any) => {
 };
 
 // Function to get AI recommendations
-const getAIRecommendations = async (data: any) => {
+const getAIRecommendations = async (data: any) => {  
   try {
-    const prompt = `Analyze the survey response data and provide exactly 5 concise, actionable recommendations (max 3-4 sentences each).
+    const prompt = `Analyze the survey response data and provide exactly 4 concise, actionable recommendations (max 8 sentences each).
 
 Data Summary:
 - Overall Response Rate: ${data.overallRate}%
+- Overall Text Questions Completion: ${data.textCompletion}%
 - Year: ${data.year}
 - Department Filter: ${data.department}
 - Survey Filter: ${data.survey}
+- Total Surveys: ${data.surveys}
+- Total Employees: ${data.totalEmployees}
+
+Department Breakdown:
+${data.departmentData?.map((dept: { department: any; responseRate: any; respondersEmployees: any; textCompletion: any; }) => 
+  `- ${dept.department}: Response Rate ${dept.responseRate}%, Responders ${dept.respondersEmployees}, Text Questions Answered ${dept.textCompletion}%`
+).join('\n')}
+
+Survey Performance (if showing multiple surveys):
+${data.chartData?.filter((item: { title: any; }) => item.title)?.map((survey: { title: any; responseRate: any; uniqueResponders: any; totalEmployees: any; period: any; }) => 
+  `- ${survey.title}: ${survey.responseRate}% response rate, ${survey.uniqueResponders} responders out of ${survey.totalEmployees} employees (${survey.period})`
+).join('\n')}
 
 FORMATTING RULES:
 1. Separate each recommendation with "###RECOMMENDATION###"
@@ -97,8 +110,8 @@ const exportToCSV = (data: any, filters: any) => {
   
   // Add overall statistics first
   csvData.push(['Overall Statistics']);
-  csvData.push(['Overall Rate (%)', 'Total Surveys', 'Total Responses', 'Total Employees']);
-  csvData.push([data.overallData.rate, data.overallData.surveys, data.overallData.responses, data.overallData.employees]);
+  csvData.push(['Overall Rate (%)', 'Total Surveys', 'Text Questions Answered (%)', 'Text Answered/Possible', 'Total Employees']);
+  csvData.push([data.overallData.rate, data.overallData.surveys, data.overallData.textCompletion, `${data.overallData.textAnswered}/${data.overallData.textPossible}`, data.overallData.employees]);
   csvData.push([]);
   
   // Add chart data
@@ -120,17 +133,15 @@ const exportToCSV = (data: any, filters: any) => {
   if (data.tableData.length > 0) {
     csvData.push([]);
     csvData.push(['Department Breakdown']);
-    const categoryColumns = Object.keys(data.tableData[0]).filter(key => 
-      !['department', 'responseRate', 'respondersEmployees'].includes(key)
-    );
     
-    csvData.push(['Department', 'Response Rate (%)', 'Responders/Total Employees', ...categoryColumns.map(cat => `${cat} (%)`)]);
+    csvData.push(['Department', 'Response Rate (%)', 'Responders/Total Employees', 'Text Questions Answered (%)', 'Text Answered/Possible']);
     data.tableData.forEach((row: any) => {
       csvData.push([
         row.department, 
         row.responseRate, 
         row.respondersEmployees,
-        ...categoryColumns.map(cat => row[cat] || 'N/A')
+        row.textCompletion,
+        `${row.textAnswered}/${row.textPossible}`
       ]);
     });
   }
@@ -156,7 +167,7 @@ export default function SurveyResponseAnalytics() {
   const [surveys, setSurveys] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
-  const [overallData, setOverallData] = useState<{ rate: number, surveys: number, responses: number, employees: number }>({ rate: 0, surveys: 0, responses: 0, employees: 0 });
+  const [overallData, setOverallData] = useState<{ rate: number, surveys: number, textCompletion: number, textAnswered: number, textPossible: number, employees: number }>({ rate: 0, surveys: 0, textCompletion: 0, textAnswered: 0, textPossible: 0, employees: 0 });
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -358,14 +369,14 @@ export default function SurveyResponseAnalytics() {
           const deptEmployees = employeeList.filter(e => e.department === dept);
           const deptEmployeeIds = deptEmployees.map(e => e.id);
           
-          let deptTotalResponses = 0;
           let deptUniqueResponders = new Set();
-          const categoryRates: { [key: string]: { responses: number, total: number } } = {};
+          let deptTextQuestionsAnswered = 0;
+          let deptTextQuestionsPossible = 0;
 
           for (const surveyItem of filteredSurveys) {
             const { data: questions } = await supabase
               .from('survey_questions')
-              .select('id, question, category')
+              .select('id')
               .eq('survey_id', surveyItem.id);
             
             const questionList = questions || [];
@@ -373,66 +384,113 @@ export default function SurveyResponseAnalytics() {
             if (questionList.length > 0) {
               const { data: responses } = await supabase
                 .from('survey_responses')
-                .select('user_id, question_id')
+                .select('user_id')
                 .in('question_id', questionList.map(q => q.id))
                 .in('user_id', deptEmployeeIds);
               
               const responseList = responses || [];
-
-              // Add to department totals
-              deptTotalResponses += responseList.length;
               responseList.forEach(r => deptUniqueResponders.add(r.user_id));
+            }
 
-              // Calculate category response rates
-              for (const response of responseList) {
-                const question = questionList.find(q => q.id === response.question_id);
-                if (question && question.category) {
-                  const category = question.category;
-                  if (!categoryRates[category]) {
-                    categoryRates[category] = { responses: 0, total: 0 };
-                  }
-                  categoryRates[category].responses += 1;
-                }
-              }
-
-              // Count total possible responses per category
-              for (const question of questionList) {
-                if (question.category) {
-                  const category = question.category;
-                  if (!categoryRates[category]) {
-                    categoryRates[category] = { responses: 0, total: 0 };
-                  }
-                  categoryRates[category].total += deptEmployees.length;
-                }
-              }
+            // Calculate text question completion for this department
+            const { data: textQuestions } = await supabase
+              .from('survey_questions')
+              .select('id')
+              .eq('survey_id', surveyItem.id)
+              .eq('type', 'text');
+            
+            const textQuestionList = textQuestions || [];
+            
+            if (textQuestionList.length > 0) {
+              // Get unique users from this department who submitted this survey
+              const { data: allResponses } = await supabase
+                .from('survey_responses')
+                .select('user_id')
+                .in('question_id', textQuestionList.map(q => q.id))
+                .in('user_id', deptEmployeeIds);
+              
+              const uniqueSubmitters = new Set((allResponses || []).map(r => r.user_id));
+              
+              // Get text responses from these submitters
+              const { data: textResponses } = await supabase
+                .from('survey_responses')
+                .select('response')
+                .in('question_id', textQuestionList.map(q => q.id))
+                .in('user_id', Array.from(uniqueSubmitters))
+                .not('response', 'is', null)
+                .neq('response', '');
+              
+              deptTextQuestionsAnswered += (textResponses || []).length;
+              deptTextQuestionsPossible += textQuestionList.length * uniqueSubmitters.size;
             }
           }
           
           const responseRate = deptEmployees.length > 0 ? 
             Number(((deptUniqueResponders.size / deptEmployees.length) * 100).toFixed(2)) : 0;
           
-          // Calculate category percentages
-          const categories: { [key: string]: number } = {};
-          for (const [category, data] of Object.entries(categoryRates)) {
-            categories[category] = data.total > 0 ? Number(((data.responses / data.total) * 100).toFixed(2)) : 0;
-          }
+          const textCompletionRate = deptTextQuestionsPossible > 0 ? 
+            Number(((deptTextQuestionsAnswered / deptTextQuestionsPossible) * 100).toFixed(2)) : 0;
           
           deptData.push({
             department: dept,
             responseRate: responseRate,
             respondersEmployees: `${deptUniqueResponders.size}/${deptEmployees.length}`,
-            ...categories
+            textCompletion: textCompletionRate,
+            textAnswered: deptTextQuestionsAnswered,
+            textPossible: deptTextQuestionsPossible
           });
         }
         setTableData(deptData);
 
+        // Calculate overall text question completion rate
+        let totalTextQuestionsAnswered = 0;
+        let totalTextQuestionsPossible = 0;
+        
+        for (const surveyItem of filteredSurveys) {
+          // Get text questions for this survey
+          const { data: textQuestions } = await supabase
+            .from('survey_questions')
+            .select('id')
+            .eq('survey_id', surveyItem.id)
+            .eq('type', 'text');
+          
+          const textQuestionList = textQuestions || [];
+          
+          if (textQuestionList.length > 0) {
+            // Get unique users who submitted this survey
+            const { data: allResponses } = await supabase
+              .from('survey_responses')
+              .select('user_id')
+              .in('question_id', textQuestionList.map(q => q.id));
+            
+            const uniqueSubmitters = new Set((allResponses || []).map(r => r.user_id));
+            
+            // Get text responses from these submitters
+            const { data: textResponses } = await supabase
+              .from('survey_responses')
+              .select('response')
+              .in('question_id', textQuestionList.map(q => q.id))
+              .in('user_id', Array.from(uniqueSubmitters))
+              .not('response', 'is', null)
+              .neq('response', '');
+            
+            totalTextQuestionsAnswered += (textResponses || []).length;
+            totalTextQuestionsPossible += textQuestionList.length * uniqueSubmitters.size;
+          }
+        }
+        
+        const textCompletionRate = totalTextQuestionsPossible > 0 ? 
+          Number(((totalTextQuestionsAnswered / totalTextQuestionsPossible) * 100).toFixed(2)) : 0;
+        
         // Calculate overall data
         const overallRate = totalEmployees > 0 ? Number(((totalUniqueResponders / totalEmployees) * 100).toFixed(2)) : 0;
         
         const newOverallData = {
           rate: overallRate,
           surveys: filteredSurveys.length,
-          responses: totalResponses,
+          textCompletion: textCompletionRate,
+          textAnswered: totalTextQuestionsAnswered,
+          textPossible: totalTextQuestionsPossible,
           employees: totalEmployees
         };
         setOverallData(newOverallData);
@@ -443,9 +501,12 @@ export default function SurveyResponseAnalytics() {
             setLoadingRecommendations(true);
             const recommendations = await getAIRecommendations({
               overallRate,
+              textCompletion: textCompletionRate,
               year,
               department,
               survey,
+              surveys: filteredSurveys.length,
+              totalEmployees,
               departmentData: deptData,
               chartData: chartData
             });
@@ -531,9 +592,9 @@ export default function SurveyResponseAnalytics() {
                 <div className="text-2xl font-bold">{overallData.surveys}</div>
                 <div className="text-sm text-gray-600">Total Surveys</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{overallData.responses}</div>
-                <div className="text-sm text-gray-600">Total Responses</div>
+              <div className="text-center" title={`${overallData.textAnswered}/${overallData.textPossible}`}>
+                <div className="text-2xl font-bold">{overallData.textCompletion}%</div>
+                <div className="text-sm text-gray-600">Text Questions Answered</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">{overallData.employees}</div>
@@ -554,15 +615,19 @@ export default function SurveyResponseAnalytics() {
           ) : chartData.length > 0 ? (
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 30, left: 80, bottom: 80 }}>
+                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 30, bottom: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey={survey === "Survey" ? "title" : "department"}
                     tick={<CustomXAxisTick />}
-                    height={60}
                     interval={0}
                     axisLine={{ stroke: '#666' }}
                     tickLine={{ stroke: '#666' }}
+                    label={{ 
+                      value: survey === "Survey" ? "Survey" : "Department",
+                      position: "bottom",
+                      offset: 15
+                    }}
                   />
                   <YAxis 
                     domain={[0, 100]} 
@@ -585,7 +650,7 @@ export default function SurveyResponseAnalytics() {
                   />
                   <Bar 
                     dataKey="responseRate" 
-                    name="Response Rate (%)" 
+                    name="Response Rate" 
                     fill="#6A1B9A"
                   />
                 </BarChart>
@@ -615,12 +680,7 @@ export default function SurveyResponseAnalytics() {
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Response Rate</th>
                       <th className="px-2 py-1 text-left">Responders/Total</th>
-                      {/* Dynamic category columns */}
-                      {tableData.length > 0 && Object.keys(tableData[0]).filter(key => 
-                        !['department', 'responseRate', 'respondersEmployees'].includes(key)
-                      ).map(category => (
-                        <th key={category} className="px-2 py-1 text-left">{category}</th>
-                      ))}
+                      <th className="px-2 py-1 text-left">Text Questions Answered</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -629,12 +689,7 @@ export default function SurveyResponseAnalytics() {
                         <td className="px-2 py-1">{row.department}</td>
                         <td className="px-2 py-1">{row.responseRate}%</td>
                         <td className="px-2 py-1">{row.respondersEmployees}</td>
-                        {/* Dynamic category cells */}
-                        {Object.keys(row).filter(key => 
-                          !['department', 'responseRate', 'respondersEmployees'].includes(key)
-                        ).map(category => (
-                          <td key={category} className="px-2 py-1">{row[category] !== undefined ? `${row[category]}%` : 'N/A'}</td>
-                        ))}
+                        <td className="px-2 py-1" title={`${row.textAnswered}/${row.textPossible}`}>{row.textCompletion}%</td>
                       </tr>
                     ))}
                   </tbody>

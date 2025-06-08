@@ -48,15 +48,28 @@ const CustomXAxisTick = (props: any) => {
 };
 
 // Function to get AI recommendations
-const getAIRecommendations = async (data: any) => {
+const getAIRecommendations = async (data: any) => {  
   try {
-    const prompt = `Analyze the recognition rate data and provide exactly 5 concise, actionable recommendations (max 3-4 sentences each).
+    const prompt = `Analyze the recognition rate data and provide exactly 4 concise, actionable recommendations (max 8 sentences each).
 
 Data Summary:
 - Overall Recognition Rate: ${data.overallRate}%
+- Total Recognitions: ${data.totalRecognitions}
+- Unique Receivers: ${data.uniqueReceivers}
+- Total Employees: ${data.totalEmployees}
 - Year: ${data.year}
 - Month Filter: ${data.month}
 - Department Filter: ${data.department}
+
+Department Breakdown:
+${data.departmentData?.map((dept: any) => 
+  `- ${dept.department}: Recognition Rate ${dept.rate}%, ${dept.receivers}/${dept.employees} employees received recognition, ${dept.count} total recognitions`
+).join('\n')}
+
+Time Trend Analysis:
+${data.chartData?.map((period: any) => 
+  `- ${period.tooltipPeriod || period.period}: ${period.rate}% recognition rate, ${period.receivers} unique receivers, ${period.count} total recognitions`
+).join('\n')}
 
 FORMATTING RULES:
 1. Separate each recommendation with "###RECOMMENDATION###"
@@ -97,16 +110,16 @@ const exportToCSV = (data: any, filters: any) => {
   
   // Add overall statistics first
   csvData.push(['Overall Statistics']);
-  csvData.push(['Overall Rate (%)', 'Total Recognitions', 'Total Employees']);
-  csvData.push([data.overallData.rate, data.overallData.count, data.overallData.total]);
+  csvData.push(['Overall Rate (%)', 'Total Recognitions', 'Receivers/Total Employees']);
+  csvData.push([data.overallData.rate, data.overallData.count, `${data.overallData.receivers}/${data.overallData.total}`]);
   csvData.push([]);
   
   // Add headers
   if (filters.department === "Department") {
     // Department breakdown
-    csvData.push(['Department', 'Recognition Rate (%)', 'Total Recognition', 'Total Employees']);
+    csvData.push(['Department', 'Recognition Rate (%)', 'Total Recognition', 'Receivers/Total Employees']);
     data.tableData.forEach((row: any) => {
-      csvData.push([row.department, row.rate, row.count, row.employees]);
+      csvData.push([row.department, row.rate, row.count, `${row.receivers}/${row.employees}`]);
     });
   } else {
     // Time series data
@@ -135,7 +148,7 @@ export default function RecognitionRateAnalytics() {
   const [years, setYears] = useState<number[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
-  const [overallData, setOverallData] = useState<{ rate: number, count: number, total: number }>({ rate: 0, count: 0, total: 0 });
+  const [overallData, setOverallData] = useState<{ rate: number, count: number, receivers: number, total: number }>({ rate: 0, count: 0, receivers: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -222,17 +235,19 @@ export default function RecognitionRateAnalytics() {
           // Show monthly data for the year
           const monthlyData = [];
           for (let m = 0; m < 12; m++) {
-            const count = filteredRecognitions.filter(r => {
+            const monthRecognitions = filteredRecognitions.filter(r => {
               const d = parseISO(r.created_at);
               return getMonth(d) === m && getYear(d) === year;
-            }).length;
+            });
             
-            const rate = totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(2)) : 0;
+            const uniqueReceivers = new Set(monthRecognitions.map(r => r.receiver));
+            const rate = totalEmployees > 0 ? Number((uniqueReceivers.size / totalEmployees * 100).toFixed(2)) : 0;
             
             monthlyData.push({
               period: format(new Date(year, m, 1), 'MMM'),
               rate,
-              count
+              count: monthRecognitions.length,
+              receivers: uniqueReceivers.size
             });
           }
           currentChartData = monthlyData;
@@ -247,16 +262,19 @@ export default function RecognitionRateAnalytics() {
           const dailyData = [];
           for (let day = monthStart; day <= monthEnd; day = new Date(day.getTime() + 24 * 60 * 60 * 1000)) {
             const dayStr = format(day, 'yyyy-MM-dd');
-            const count = filteredRecognitions.filter(r => 
+            const dayRecognitions = filteredRecognitions.filter(r => 
               r.created_at.startsWith(dayStr)
-            ).length;
+            );
             
-            const rate = totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(2)) : 0;
+            const uniqueReceivers = new Set(dayRecognitions.map(r => r.receiver));
+            const rate = totalEmployees > 0 ? Number((uniqueReceivers.size / totalEmployees * 100).toFixed(2)) : 0;
             
             dailyData.push({
-              period: format(day, 'MMM dd'),
+              period: format(day, 'dd'),
+              tooltipPeriod: format(day, 'MMM dd'),
               rate,
-              count
+              count: dayRecognitions.length,
+              receivers: uniqueReceivers.size
             });
           }
           currentChartData = dailyData;
@@ -281,12 +299,14 @@ export default function RecognitionRateAnalytics() {
             });
           }
           
-          const rate = deptEmployees.length > 0 ? Number((deptRecognitions.length / deptEmployees.length * 100).toFixed(2)) : 0;
+          const uniqueReceivers = new Set(deptRecognitions.map(r => r.receiver));
+          const rate = deptEmployees.length > 0 ? Number((uniqueReceivers.size / deptEmployees.length * 100).toFixed(2)) : 0;
           
           deptData.push({
             department: dept,
             rate,
             count: deptRecognitions.length,
+            receivers: uniqueReceivers.size,
             employees: deptEmployees.length
           });
         }
@@ -302,11 +322,13 @@ export default function RecognitionRateAnalytics() {
           });
         }
         
-        const overallRate = totalEmployees > 0 ? Number((overallRecognitions.length / totalEmployees * 100).toFixed(2)) : 0;
+        const uniqueReceivers = new Set(overallRecognitions.map(r => r.receiver));
+        const overallRate = totalEmployees > 0 ? Number((uniqueReceivers.size / totalEmployees * 100).toFixed(2)) : 0;
         
         const newOverallData = {
           rate: overallRate,
           count: overallRecognitions.length,
+          receivers: uniqueReceivers.size,
           total: totalEmployees
         };
         setOverallData(newOverallData);
@@ -317,6 +339,9 @@ export default function RecognitionRateAnalytics() {
             setLoadingRecommendations(true);
             const recommendations = await getAIRecommendations({
               overallRate,
+              totalRecognitions: overallRecognitions.length,
+              uniqueReceivers: uniqueReceivers.size,
+              totalEmployees,
               year,
               month,
               department,
@@ -402,12 +427,12 @@ export default function RecognitionRateAnalytics() {
                 <div className="text-sm text-gray-600">Recognition Rate</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{overallData.count}</div>
-                <div className="text-sm text-gray-600">Total Recognitions</div>
+                <div className="text-2xl font-bold">{overallData.receivers}/{overallData.total}</div>
+                <div className="text-sm text-gray-600">Receivers/Total Employees</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{overallData.total}</div>
-                <div className="text-sm text-gray-600">Total Employees</div>
+                <div className="text-2xl font-bold">{overallData.count}</div>
+                <div className="text-sm text-gray-600">Total Recognitions</div>
               </div>
             </div>
           )}
@@ -424,25 +449,35 @@ export default function RecognitionRateAnalytics() {
           ) : (
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 5, right: 30, left: 60, bottom: 60 }}>
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 30, bottom: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
-                    dataKey="period" 
+                    dataKey="period"
+                    padding={{ left: 30, right: 30 }}
                     tick={<CustomXAxisTick />}
-                    height={40}
                     interval={0}
                     axisLine={{ stroke: '#666' }}
                     tickLine={{ stroke: '#666' }}
+                    label={{ 
+                      value: month === "Month" ? "Month" : format(new Date(year, months.indexOf(month) - 1), 'MMMM'),
+                      position: "bottom",
+                      offset: 15
+                    }}
                   />
                   <YAxis 
                     domain={[0, 'dataMax']} 
-                    label={{ value: "Recognition Rate (%)", angle: -90, position: 'insideLeft' }} 
+                    label={{ value: "Recognition Rate (%)", angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }} 
                   />
-                  <Tooltip formatter={v => `${v}%`} />
+                  <Tooltip formatter={v => `${v}%`}
+                    labelFormatter={(value, entry) => {
+                      const item = chartData.find(d => d.period === value);
+                      return item?.tooltipPeriod || value;
+                    }}   
+                  />
                   <Line 
                     type="linear" 
                     dataKey="rate" 
-                    name="Recognition Rate (%)" 
+                    name="Recognition Rate" 
                     stroke="#AB47BC" 
                     strokeWidth={2} 
                     activeDot={{ r: 8 }} 
@@ -469,8 +504,8 @@ export default function RecognitionRateAnalytics() {
                     <tr>
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Recognition Rate</th>
-                      <th className="px-2 py-1 text-left">Total Recognition</th>
-                      <th className="px-2 py-1 text-left">Total Employees</th>
+                      <th className="px-2 py-1 text-left">Receivers/Total Employees</th>
+                      <th className="px-2 py-1 text-left">Total Recognitions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -478,8 +513,8 @@ export default function RecognitionRateAnalytics() {
                       <tr key={row.department}>
                         <td className="px-2 py-1">{row.department}</td>
                         <td className="px-2 py-1">{row.rate}%</td>
+                        <td className="px-2 py-1">{row.receivers}/{row.employees}</td>
                         <td className="px-2 py-1">{row.count}</td>
-                        <td className="px-2 py-1">{row.employees}</td>
                       </tr>
                     ))}
                   </tbody>

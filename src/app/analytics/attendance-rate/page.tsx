@@ -49,15 +49,28 @@ const CustomXAxisTick = (props: any) => {
 };
 
 // Function to get AI recommendations
-const getAIRecommendations = async (data: any) => {
+const getAIRecommendations = async (data: any) => {  
   try {
-    const prompt = `Analyze the attendance rate data and provide exactly 5 concise, actionable recommendations (max 3-4 sentences each).
+    const prompt = `Analyze the attendance rate data and provide exactly 4 concise, actionable recommendations (max 8 sentences each).
 
 Data Summary:
 - Overall Attendance Rate: ${data.overallRate}%
+- Total Attendances: ${data.totalAttendances}
+- Maximum Possible Attendances: ${data.maxAttendances}
+- Total Employees: ${data.totalEmployees}
 - Year: ${data.year}
 - Month Filter: ${data.month}
 - Department Filter: ${data.department}
+
+Department Breakdown:
+${data.departmentData?.map((dept: any) => 
+  `- ${dept.department}: Attendance Rate ${dept.rate}%, ${dept.count}/${dept.maximum} attendances, ${dept.employees} employees`
+).join('\n')}
+
+Time Trend Analysis:
+${data.chartData?.map((period: any) => 
+  `- ${period.tooltipPeriod || period.period}: ${period.rate}% attendance rate, ${period.count} attendances${period.maximum ? ` out of ${period.maximum} maximum` : ''}`
+).join('\n')}
 
 FORMATTING RULES:
 1. Separate each recommendation with "###RECOMMENDATION###"
@@ -262,7 +275,8 @@ export default function AttendanceRateAnalytics() {
               ).length;
               
               dailyData.push({
-                period: format(day, 'MMM dd'),
+                period: format(day, 'dd'),
+                tooltipPeriod: format(day, 'MMM dd'),
                 rate: totalEmployees > 0 ? Number((count / totalEmployees * 100).toFixed(2)) : 0,
                 count
               });
@@ -356,6 +370,9 @@ export default function AttendanceRateAnalytics() {
             setLoadingRecommendations(true);
             const recommendations = await getAIRecommendations({
               overallRate,
+              totalAttendances: overallAttendances.length,
+              maxAttendances: totalMaximum,
+              totalEmployees,
               year,
               month,
               department,
@@ -463,28 +480,43 @@ export default function AttendanceRateAnalytics() {
           ) : (
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 5, right: 30, left: 60, bottom: 60 }}>
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 30, bottom: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
-                    dataKey="period" 
+                    dataKey="period"
+                    padding={{ left: 30, right: 30 }}
                     tick={<CustomXAxisTick />}
-                    height={40}
                     interval={0}
                     axisLine={{ stroke: '#666' }}
                     tickLine={{ stroke: '#666' }}
+                    label={{ 
+                      value: month === "Month" ? "Month" : format(new Date(year, months.indexOf(month) - 1), 'MMMM'),
+                      position: "bottom",
+                      offset: 15
+                    }}
                   />
                   <YAxis 
                     domain={[0, 100]} 
-                    label={{ value: "Attendance Rate (%)", angle: -90, position: 'insideLeft' }} 
+                    label={{ 
+                      value: "Attendance Rate (%)", 
+                      angle: -90, 
+                      position: 'insideLeft',
+                      style: { textAnchor: 'middle' }
+                    }} 
                   />
-                  <Tooltip formatter={v => `${v}%`} />
+                  <Tooltip formatter={v => `${v}%`}
+                    labelFormatter={(value, entry) => {
+                      const item = chartData.find(d => d.period === value);
+                      return item?.tooltipPeriod || value;
+                    }}  
+                  />
                   <Line 
                     type="linear" 
                     dataKey="rate" 
-                    name="Attendance Rate (%)" 
+                    name="Attendance Rate" 
                     stroke="#6A1B9A" 
                     strokeWidth={2} 
-                    activeDot={{ r: 8 }} 
+                    activeDot={{ r: 8 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
