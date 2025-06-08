@@ -136,7 +136,7 @@ export default function TemplatesPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <Card className="h-full">
             <CardHeader>
@@ -179,7 +179,7 @@ export default function TemplatesPage() {
           </Card>
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-3">
           {activeTemplate ? (
             <div className="space-y-6">
               <Card>
@@ -203,19 +203,19 @@ export default function TemplatesPage() {
                       </Button>
                       <Button onClick={() => handleDuplicateTemplate(activeTemplate.id)}>
                         <Copy className="mr-2 h-4 w-4" />
-                        Duplicate
+                        Apply Template
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-3 gap-4">
                     {/* <div>
                       <h3 className="text-sm font-medium text-gray-500">Template Type</h3>
                       <p className="capitalize">{activeTemplate.type}</p>
                     </div> */}
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Created</h3>
+                      <h3 className="text-sm font-medium text-gray-500">Created At</h3>
                       <p>{format(new Date(activeTemplate.created_at), "MMMM d, yyyy")}</p>
                     </div>
                     <div>
@@ -223,7 +223,7 @@ export default function TemplatesPage() {
                       <p>{format(new Date(activeTemplate.updated_at), "MMMM d, yyyy")}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Questions</h3>
+                      <h3 className="text-sm font-medium text-gray-500">Total Questions</h3>
                       <p>{questions.length} questions</p>
                     </div>
                   </div>

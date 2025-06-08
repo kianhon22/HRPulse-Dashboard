@@ -33,8 +33,24 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        showToast.success("Logged in successfully")
-        router.push("/dashboards")
+        const { data: userData, error: roleError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", data.user.id)
+        .single()
+
+      if (roleError) {
+        showToast.error("Failed to login")
+        return
+      }
+
+      if (userData.role !== "admin") {
+        showToast.error("Access denied, you are not an admin")
+        return
+      }
+
+      showToast.success("Logged in successfully")
+      router.push("/dashboards")
       }
     } catch (error: any) {
       showToast.error(error.message || "An unexpected error occurred")

@@ -64,8 +64,9 @@ export default function FeedbackPage() {
           <span className={`capitalize font-medium px-2 py-1 rounded-md text-sm ${
             status === "Active" ? "text-green-700 bg-green-100" :
             status === "Closed" ? "text-red-700 bg-red-100" :
-            status === "Draft" ? "text-gray-700 bg-gray-100" :
+            status === "Draft" ? "text-gray-800 bg-gray-200" :
             status === "Scheduled" ? "text-yellow-700 bg-yellow-100" :
+            status === "Deleted" ? "text-white bg-black" :
             "text-gray-800 bg-gray-200"
           }`}>
             {status}
@@ -108,17 +109,19 @@ export default function FeedbackPage() {
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation()
-                router.push(`/surveys/${survey.id}/edit`)
-              }}
-              className="h-8 w-8"
-            >
-              <PencilLine className="h-4 w-4" />
-            </Button>
+            {(survey.status === 'Draft' || survey.status === 'Scheduled') && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(`/surveys/${survey.id}/edit`)
+                }}
+                className="h-8 w-8"
+              >
+                <PencilLine className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         )
       },
@@ -172,6 +175,28 @@ export default function FeedbackPage() {
 
   useEffect(() => {
     fetchSurveys(selectedYear)
+    
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('surveys-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'surveys',
+          filter: 'is_template=eq.false'
+        }, 
+        (payload) => {
+          console.log('Survey change detected:', payload)
+          // Refetch data when any change occurs
+          fetchSurveys(selectedYear)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [selectedYear])
 
   const handleYearChange = (year: string) => {

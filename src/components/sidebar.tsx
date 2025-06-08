@@ -91,7 +91,6 @@ export function Sidebar({
   setIsCollapsed: (val: boolean) => void
 }) {
   const pathname = usePathname()
-  // const [isCollapsed, setIsCollapsed] = useState(false)
   const { isAuthenticated } = useAuth()
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
   
@@ -107,35 +106,23 @@ export function Sidebar({
     <div 
       className={cn(
         "group fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-[#6A1B9A] transition-all duration-300",
-        isCollapsed ? "w-14" : "w-54"
+        isCollapsed ? "w-16" : "w-53"
       )}
-      onMouseEnter={() => isCollapsed && setIsCollapsed(false)}
-      onMouseLeave={() => isCollapsed && setIsCollapsed(true)}
+      onMouseEnter={() => setIsCollapsed(false)}
+      onMouseLeave={() => setIsCollapsed(true)}
     >
-      <div className="flex h-16 items-center justify-between border-b px-4">
+      <div className="flex h-16 items-center justify-center border-b px-4">
         <Link href="/" className="flex items-center space-x-2">
           <Image
             src="/white logo.png"
             alt="HRPulse Logo"
-            width={isCollapsed ? 58 : 80}
-            height={isCollapsed ? 58 : 80}
-            className={cn("rounded-full flex-shrink-0", isCollapsed ? "-ml-2.5" : "")}
+            width={isCollapsed ? 52 : 80}
+            height={isCollapsed ? 52 : 80}
+            className="rounded-full flex-shrink-0"
           />
-          {/* <span className={cn("font-bold text-white transition-all text-lg duration-300", 
-            isCollapsed ? "opacity-0 w-0 ml-0" : "opacity-100 ml-2"
-          )}>
-            HRPulse
-          </span> */}
         </Link>
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className={cn("text-white hover:text-gray-200 transition-all duration-300", 
-            isCollapsed ? "opacity-0 w-0" : "opacity-100"
-          )}
-        >
-          <Menu className="h-6 w-6"/>
-        </button>
       </div>
+      
       <nav className="flex-1 space-y-1 p-4">
         {sidebarItems.map((item) => {
           if (item.title === "Analytics") {
@@ -144,11 +131,11 @@ export function Sidebar({
                 <div
                   className={cn(
                     "flex items-center space-x-3 rounded-lg px-1 py-2 text-sm font-medium transition-colors cursor-pointer select-none",
+                    isCollapsed ? "px-2" : "pl-2",
                     (analyticsOpen || isAnalyticsActive)
                       ? "bg-white text-[#6A1B9A]"
                       : "text-white hover:bg-white hover:text-[#6A1B9A]"
                   )}
-
                 >
                   <item.icon className="-ml-0.5 h-5 w-5 flex-shrink-0" />
                   <span className={cn("transition-all duration-300", isCollapsed ? "opacity-0 w-0" : "opacity-100")}>Analytics</span>
@@ -158,8 +145,9 @@ export function Sidebar({
                       : <ChevronRight className="h-4 w-4" />}
                   </span>
                 </div>
-                {(analyticsOpen || isAnalyticsActive) && !isCollapsed && (
-                  <div className="ml-7 mt-1 space-y-1 bg-[#721ca7] rounded shadow-lg py-2">
+                
+                {((analyticsOpen || isAnalyticsActive) && !isCollapsed) && (
+                  <div className="ml-6 mt-1 space-y-1 bg-[#721ca7] rounded shadow-lg py-2">
                     {analyticsChildren.map(child => {
                       const isChildActive = pathname.startsWith(child.href)
                       return (
@@ -188,7 +176,8 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center space-x-3 rounded-lg px-1 py-2 text-sm font-medium transition-colors",
+                "flex items-center space-x-3 rounded-lg py-2 text-sm font-medium transition-colors",
+                isCollapsed ? "px-2" : "pl-2",
                 isActive
                   ? "bg-white text-[#6A1B9A]"
                   : "text-white hover:bg-white hover:text-[#6A1B9A]"

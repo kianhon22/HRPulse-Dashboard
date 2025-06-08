@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { validateQuestionText, validateSurveyTitle } from "@/lib/utils"
 
 // type QuestionType = "Text" | "Rating"
 
@@ -225,7 +226,7 @@ export default function EditTemplatePage() {
 
   const handleSubmit = async () => {
     // Validate form
-    if (!title.trim()) {
+    if (!validateSurveyTitle(title)) {
       showToast.error("Please enter a template title")
       return
     }
@@ -239,7 +240,12 @@ export default function EditTemplatePage() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i]
       if (!q.question_text.trim()) {
-        showToast.error(`Question ${i + 1} text is required`)
+        showToast.error(`Question ${i + 1} cannot be blank`)
+        return
+      }
+      
+      if (!validateQuestionText(q.question_text)) {
+        showToast.error(`Question ${i + 1} must contain alphabetic characters and cannot be only numbers`)
         return
       }
     }

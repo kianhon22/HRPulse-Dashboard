@@ -37,7 +37,7 @@ const columns: ColumnDef<Attendance>[] = [
     },
   },
   {
-    accessorKey: "check_in",
+    // accessorKey: "check_in",
     header: "Check In",
     cell: ({ row }) => {
       const checkIn = row.getValue("check_in") as string
@@ -47,6 +47,7 @@ const columns: ColumnDef<Attendance>[] = [
   {
     accessorKey: "check_out",
     header: "Check Out",
+    enableSorting: false,
     cell: ({ row }) => {
       const checkOut = row.getValue("check_out") as string | null
       if (!checkOut) return "-"
@@ -57,13 +58,10 @@ const columns: ColumnDef<Attendance>[] = [
     accessorKey: "total_hours",
     header: "Total Hours",
     cell: ({ row }) => {
-      const totalHours = row.getValue("total_hours") as number | null;
-    
-      if (!totalHours) return "N/A";
-    
+      const totalHours = row.getValue("total_hours") as number | null;    
+      if (!totalHours) return "N/A";    
       const hours = Math.floor(totalHours);
-      const minutes = Math.round((totalHours - hours) * 60);
-    
+      const minutes = Math.round((totalHours - hours) * 60);    
       return `${hours} hr${minutes > 0 ? ` ${minutes} min` : ''}`;
     },
   },

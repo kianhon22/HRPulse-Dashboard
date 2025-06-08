@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { exportToCSV } from "@/lib/utils/csv-export"
-import { ArrowLeft, PencilLine, ChevronDown, ChevronUp, Smile, Meh, Frown, ThumbsUp, ThumbsDown, Download } from "lucide-react"
+import { ArrowLeft, PencilLine, ChevronDown, ChevronUp, Smile, Meh, Frown, ThumbsUp, ThumbsDown, Download, Trash2, Calendar } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 type Question = {
   id: string
@@ -55,6 +56,10 @@ export default function SurveyDetailPage() {
   const [loading, setLoading] = useState(true)
   const [expandedResponses, setExpandedResponses] = useState<Record<string, boolean>>({})
   const [activeCategory, setActiveCategory] = useState<string>("")
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false)
+  const [showUnscheduleDialog, setShowUnscheduleDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
   const surveyId = useParams()?.id as string
 
   // Get all unique categories
@@ -134,6 +139,56 @@ export default function SurveyDetailPage() {
     }
 
     fetchSurveyDetails()
+    
+    // Set up real-time subscriptions
+    const surveySubscription = supabase
+      .channel('survey-detail')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'surveys',
+          filter: `id=eq.${surveyId}`
+        }, 
+        () => {fetchSurveyDetails()}
+      )
+      .subscribe()
+
+    const questionsSubscription = supabase
+      .channel('survey-questions')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'survey_questions',
+          filter: `survey_id=eq.${surveyId}`
+        }, 
+        () => {
+          fetchSurveyDetails()
+        }
+      )
+      .subscribe()
+
+    const responsesSubscription = supabase
+      .channel('survey-responses')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'survey_responses',
+          filter: `survey_id=eq.${surveyId}`
+        }, 
+        () => {
+          fetchSurveyDetails()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      surveySubscription.unsubscribe()
+      questionsSubscription.unsubscribe()
+      responsesSubscription.unsubscribe()
+    }
   }, [surveyId])
 
   const toggleResponseExpansion = (responseId: string) => {
@@ -147,9 +202,9 @@ export default function SurveyDetailPage() {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-800'
       case 'Closed': return 'bg-red-100 text-red-800'
-      case 'Draft': return 'bg-gray-100 text-gray-800'
+      case 'Draft': return 'bg-gray-200 text-gray-800'
       case 'Scheduled': return 'bg-yellow-100 text-yellow-800'
-      case 'Deleted': return 'bg-gray-100 text-gray-800'
+      case 'Deleted': return 'bg-black text-white'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -296,6 +351,154 @@ export default function SurveyDetailPage() {
     }
   }
 
+  const handleScheduleSurvey = async () => {
+    setActionLoading(true)
+    try {
+      const { error } = await supabase
+        .from('surveys')
+        .update({ status: 'Scheduled', updated_at: new Date().toISOString() })
+        .eq('id', surveyId)
+      
+      if (error) {
+        showToast.error("Failed to schedule survey")
+        console.error('Error scheduling survey:', error)
+        return
+      }
+      
+      setSurvey(prev => prev ? { ...prev, status: 'Scheduled' } : null)
+      showToast.success("Survey scheduled successfully")
+      setShowScheduleDialog(false)
+    } catch (error) {
+      showToast.error("An unexpected error occurred")
+      console.error('Error:', error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleUnscheduleSurvey = async () => {
+    setActionLoading(true)
+    try {
+      const { error } = await supabase
+        .from('surveys')
+        .update({ status: 'Draft', updated_at: new Date().toISOString() })
+        .eq('id', surveyId)
+      
+      if (error) {
+        showToast.error("Failed to unschedule survey")
+        console.error('Error unscheduling survey:', error)
+        return
+      }
+      
+      setSurvey(prev => prev ? { ...prev, status: 'Draft' } : null)
+      showToast.success("Survey unscheduled successfully")
+      setShowUnscheduleDialog(false)
+    } catch (error) {
+      showToast.error("An unexpected error occurred")
+      console.error('Error:', error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleDeleteSurvey = async () => {
+    setActionLoading(true)
+    try {
+      const { error } = await supabase
+        .from('surveys')
+        .update({ status: 'Deleted', updated_at: new Date().toISOString() })
+        .eq('id', surveyId)
+      
+      if (error) {
+        showToast.error("Failed to delete survey")
+        console.error('Error deleting survey:', error)
+        return
+      }
+      
+      setSurvey(prev => prev ? { ...prev, status: 'Deleted' } : null)
+      showToast.success("Survey deleted successfully")
+      setShowDeleteDialog(false)
+    } catch (error) {
+      showToast.error("An unexpected error occurred")
+      console.error('Error:', error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleExportSurvey = () => {
+    if (!survey) return
+
+    // Prepare export data
+    const exportData: any[] = []
+    
+    // Add survey details
+    exportData.push({
+      Type: 'Survey Details',
+      Title: survey.title,
+      Description: survey.description || '',
+      Status: survey.status,
+      'Start Date': survey.start_date ? format(new Date(survey.start_date), "MMMM d, yyyy") : '',
+      'End Date': survey.end_date ? format(new Date(survey.end_date), "MMMM d, yyyy") : '',
+      'Created At': format(new Date(survey.created_at), "MMMM d, yyyy"),
+      'Total Responses': responses.length
+    })
+
+    // Add empty row
+    exportData.push({})
+
+    // Add questions and responses
+    questions.forEach((question, index) => {
+      const questionResponses = getResponsesForQuestion(question.id)
+      
+      // Add question details
+      exportData.push({
+        Type: 'Question',
+        'Question #': index + 1,
+        Category: question.category,
+        'Question Text': question.question,
+        'Question Type': question.type,
+        'Response Count': questionResponses.length
+      })
+
+      // Add responses for this question
+      questionResponses.forEach((response, respIndex) => {
+        const rowData: any = {
+          Type: 'Response',
+          'Response #': respIndex + 1,
+          'User': response.user_name,
+          'Response': response.response,
+          'Response Date': format(new Date(response.created_at), "MMMM d, yyyy HH:mm")
+        }
+
+        // Add sentiment analysis for text questions
+        if (question.type === 'text' && response.sentiment && response.sentiment.length > 0) {
+          const sentiment = response.sentiment[0]
+          let sentimentLabel = 'Unknown'
+          
+          switch(sentiment.label) {
+            case 1: sentimentLabel = 'Very Negative'; break;
+            case 2: sentimentLabel = 'Negative'; break;
+            case 3: sentimentLabel = 'Neutral'; break;
+            case 4: sentimentLabel = 'Positive'; break;
+            case 5: sentimentLabel = 'Very Positive'; break;
+          }
+          
+          rowData['Sentiment'] = sentimentLabel
+          rowData['Sentiment Score'] = `${Math.round(sentiment.score * 100)}%`
+        }
+
+        exportData.push(rowData)
+      })
+
+      // Add empty row between questions
+      exportData.push({})
+    })
+
+    exportToCSV([], exportData, `Survey_${survey.title}_Export`)
+    showToast.success("Survey data exported successfully")
+  }
+
   if (loading) {
     return (
       <div className="py-8 pr-8">
@@ -338,48 +541,79 @@ export default function SurveyDetailPage() {
           <h1 className="text-3xl font-bold">{survey.title}</h1>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => exportToCSV(columns, responses, "Reward Redemptions")}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <div
-            title={
-              survey.status === 'Active' || survey.status === 'Closed'
-                ? `You cannot edit an ${survey.status.toLowerCase()} survey`
-                : ''
-            }
+          {survey.status === 'Draft' && (
+            <>
+              <Button 
+                onClick={() => setShowScheduleDialog(true)}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Schedule
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </>
+          )}
+
+          {survey.status === 'Scheduled' && (
+            <>
+              <Button 
+                onClick={() => setShowUnscheduleDialog(true)}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Unschedule
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </>
+          )}
+
+          {(survey.status === 'Active' || survey.status === 'Closed') && (
+            <>
+              <Button onClick={handleExportSurvey}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>              
+            </>
+          )}
+
+          <Button 
+            variant="outline" 
+            onClick={() => router.push(`/surveys/${survey.id}/edit`)}
+            disabled={survey.status === 'Active' || survey.status === 'Closed'}
+            title={`You cannot edit an ${survey.status.toLowerCase()} survey`}
           >
-            <Button 
-              variant="outline" 
-              onClick={() => router.push(`/surveys/${survey.id}/edit`)}
-              disabled={survey.status === 'Active' || survey.status === 'Closed'}
-            >
-              <PencilLine className="mr-2 h-4 w-4" />
-              Edit Survey
-            </Button>
-          </div>
+            <PencilLine className="mr-2 h-4 w-4" />
+            Edit Survey
+          </Button>
         </div>
       </div>
 
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Survey Information</CardTitle>
+            <div className="flex justify-between items-center -mt-2 mb-4">
+              <CardTitle>Survey Details</CardTitle>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(survey.status)}`}>
                 {survey.status}
               </span>
             </div>
+            <h3 className="text-sm font-medium text-gray-500">Description</h3>
             {survey.description && (
               <CardDescription>{survey.description}</CardDescription>
             )}
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {/* <div>
-                <h3 className="text-sm font-medium text-gray-500">Survey Type</h3>
-                <p className="capitalize">{survey.type}</p>
-              </div> */}
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Start Date</h3>
                 <p>{survey.start_date ? format(new Date(survey.start_date), "MMMM d, yyyy") : "Not specified"}</p>
@@ -552,6 +786,76 @@ export default function SurveyDetailPage() {
           </Card>
         )}
       </div>
+
+      {/* Schedule Confirmation Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule Survey</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to schedule this survey? This will change the status from Draft to Scheduled.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleScheduleSurvey}
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Scheduling..." : "Schedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unschedule Confirmation Dialog */}
+      <Dialog open={showUnscheduleDialog} onOpenChange={setShowUnscheduleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unschedule Survey</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to unschedule this survey? This will change the status from Scheduled to Draft.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUnscheduleDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUnscheduleSurvey}
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Unscheduling..." : "Unschedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Survey</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this survey? This action will mark the survey as deleted and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleDeleteSurvey}
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

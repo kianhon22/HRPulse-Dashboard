@@ -30,10 +30,27 @@ interface MetricData {
   icon: any
   trend: string
   trendUp: boolean
+  trendColor: string
   period?: string
 }
 
 const COLORS = ['#6A1B9A', '#8E24AA', '#AB47BC', '#CE93D8']
+
+// Helper function to format trend display
+const formatTrend = (trendValue: number) => {
+  if (trendValue === 0) {
+    return "No change"
+  }
+  return `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(2)}%`
+}
+
+// Helper function to get trend color
+const getTrendColor = (trendValue: number) => {
+  if (trendValue === 0) {
+    return "text-gray-500"
+  }
+  return trendValue >= 0 ? "text-green-600" : "text-red-600"
+}
 
 export default function AnalyticsDashboard() {
   const [metrics, setMetrics] = useState<MetricData[]>([
@@ -44,6 +61,7 @@ export default function AnalyticsDashboard() {
       icon: HeartHandshake,
       trend: "-",
       trendUp: true,
+      trendColor: "",
     },
     {
       title: "Survey Response",
@@ -52,6 +70,7 @@ export default function AnalyticsDashboard() {
       icon: MessageSquare,
       trend: "-",
       trendUp: true,
+      trendColor: "",
     },
     {
       title: "Attendance Rate",
@@ -60,6 +79,7 @@ export default function AnalyticsDashboard() {
       icon: Calendar,
       trend: "-",
       trendUp: true,
+      trendColor: "",
     },
     {
       title: "Recognition Points",
@@ -68,6 +88,7 @@ export default function AnalyticsDashboard() {
       icon: Award,
       trend: "-",
       trendUp: true,
+      trendColor: "",
     },
   ])
   const [engagementChart, setEngagementChart] = useState<any[]>([])
@@ -239,6 +260,7 @@ export default function AnalyticsDashboard() {
             icon: HeartHandshake,
             trend: `${Number(engagementTrend) >= 0 ? '+' : ''}${engagementTrend}%`,
             trendUp: Number(engagementTrend) >= 0,
+            trendColor: getTrendColor(Number(engagementTrend)),
             period: latestSurvey && lastSurvey ? `${format(parseISO(latestSurvey.start_date), 'MMM d')} - ${format(parseISO(latestSurvey.end_date), 'MMM d')} (latest), ${format(parseISO(lastSurvey.start_date), 'MMM d')} - ${format(parseISO(lastSurvey.end_date), 'MMM d')} (last)` : '',
           },
           {
@@ -248,6 +270,7 @@ export default function AnalyticsDashboard() {
             icon: MessageSquare,
             trend: `${Number(surveyResponseTrend) >= 0 ? '+' : ''}${surveyResponseTrend}%`,
             trendUp: Number(surveyResponseTrend) >= 0,
+            trendColor: getTrendColor(Number(surveyResponseTrend)),
             period: latestSurvey && lastSurvey ? `${format(parseISO(latestSurvey.start_date), 'MMM d')} - ${format(parseISO(latestSurvey.end_date), 'MMM d')} (latest), ${format(parseISO(lastSurvey.start_date), 'MMM d')} - ${format(parseISO(lastSurvey.end_date), 'MMM d')} (last)` : '',
           },
           {
@@ -257,6 +280,7 @@ export default function AnalyticsDashboard() {
             icon: Calendar,
             trend: `${Number(attendanceTrend) >= 0 ? '+' : ''}${attendanceTrend}%`,
             trendUp: Number(attendanceTrend) >= 0,
+            trendColor: getTrendColor(Number(attendanceTrend)),
           },
           {
             title: "Recognition Rate",
@@ -265,6 +289,7 @@ export default function AnalyticsDashboard() {
             icon: Award,
             trend: `${Number(recognitionTrend) >= 0 ? '+' : ''}${recognitionTrend}%`,
             trendUp: Number(recognitionTrend) >= 0,
+            trendColor: getTrendColor(Number(recognitionTrend)),
           },
         ])
 
@@ -353,6 +378,55 @@ export default function AnalyticsDashboard() {
       }
     }
     fetchData()
+    
+    // Set up real-time subscriptions for all relevant tables
+    const surveysSubscription = supabase
+      .channel('dashboard-surveys')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'surveys' }, 
+        () => fetchData()
+      )
+      .subscribe()
+
+    const responsesSubscription = supabase
+      .channel('dashboard-responses')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'survey_responses' }, 
+        () => fetchData()
+      )
+      .subscribe()
+
+    const attendancesSubscription = supabase
+      .channel('dashboard-attendances')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'attendances' }, 
+        () => fetchData()
+      )
+      .subscribe()
+
+    const recognitionsSubscription = supabase
+      .channel('dashboard-recognitions')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'recognitions' }, 
+        () => fetchData()
+      )
+      .subscribe()
+
+    const usersSubscription = supabase
+      .channel('dashboard-users')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'users' }, 
+        () => fetchData()
+      )
+      .subscribe()
+
+    return () => {
+      surveysSubscription.unsubscribe()
+      responsesSubscription.unsubscribe()
+      attendancesSubscription.unsubscribe()
+      recognitionsSubscription.unsubscribe()
+      usersSubscription.unsubscribe()
+    }
   }, [])
 
   return (

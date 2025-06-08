@@ -82,6 +82,7 @@ export default function EmployeesPage() {
       },
     },
     {
+      header: "Action",
       id: "actions",
       cell: ({ row }) => {
         const employee = row.original
@@ -199,7 +200,7 @@ export default function EmployeesPage() {
             id: "work_mode",
             title: "Mode",
             width: "w-[80px]",
-            options: ["Onsit", "Remote"].map(mode => ({
+            options: ["Onsite", "Remote"].map(mode => ({
               label: mode,
               value: mode,
             })),

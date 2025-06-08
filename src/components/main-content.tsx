@@ -22,7 +22,7 @@ export function MainContent({ children, isCollapsed }: MainContentProps) {
         "flex-1 overflow-x-hidden transition-all duration-300",
         isSidebarVisible ? 
           isCollapsed ? 
-            "pl-16 lg:pl-18" : "pl-64 lg:pl-58" 
+            "pl-16 lg:pl-22" : "pl-64 lg:pl-58" 
           : ""
       )}
     >

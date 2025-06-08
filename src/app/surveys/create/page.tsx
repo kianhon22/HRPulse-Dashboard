@@ -22,6 +22,7 @@ import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { validateQuestionText, validateSurveyTitle } from "@/lib/utils"
 
 // type QuestionType = "Text" | "Rating"
 
@@ -258,10 +259,15 @@ export default function CreateSurveyPage() {
     return (existingSurveys || []).length >= 4;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (forceCreate: boolean) => {
     // Validate form
-    if (!title.trim()) {
+    if (!validateSurveyTitle(title)) {
       showToast.error("Please enter a survey title")
+      return
+    }
+
+    if (!startDate || !endDate) {
+      showToast.error("Please select start date and end date")
       return
     }
 
@@ -274,13 +280,18 @@ export default function CreateSurveyPage() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i]
       if (!q.question_text.trim()) {
-        showToast.error(`Question ${i + 1} text is required`)
+        showToast.error(`Question ${i + 1} cannot be blank`)
+        return
+      }
+      
+      if (!validateQuestionText(q.question_text)) {
+        showToast.error(`Question ${i + 1} must contain alphabetic characters and cannot be only numbers`)
         return
       }
     }
 
     // Check quarterly survey limit if not a template and start date is set
-    if (!saveAsTemplate && startDate) {
+    if (!saveAsTemplate && startDate && !forceCreate) {
       const isLimitReached = await checkQuarterlySurveys(startDate);
       if (isLimitReached) {
         setShowQuarterlyAlert(true);
@@ -460,7 +471,7 @@ export default function CreateSurveyPage() {
             </div>
             {/* <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md p-3 mt-2"> */}
             <div className="-mb-3 text-xs text-amber-600">
-              <strong>*</strong>You should create only 4 surveys (quarterly) per year to maintain a balanced assessment schedule.
+              <strong>*</strong>You are recommended to create only 4 surveys (quarterly) per year to maintain a balanced employee assessment.
             </div>
           </CardContent>
         </Card>
@@ -601,7 +612,7 @@ export default function CreateSurveyPage() {
           <Button variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button onClick={() => handleSubmit(false)} disabled={isSubmitting}>
             {isSubmitting ? "Creating..." : saveAsTemplate ? "Create Template" : "Create Survey"}
           </Button>
         </div>
@@ -620,16 +631,16 @@ export default function CreateSurveyPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back</AlertDialogCancel>
-            {/* <AlertDialogAction 
+            <AlertDialogAction 
               onClick={() => {
                 setShowQuarterlyAlert(false);
                 setIsSubmitting(true);
                 // Continue with survey creation logic
-                handleSubmit();
+                handleSubmit(true);
               }}
             >
               Continue Anyway
-            </AlertDialogAction> */}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

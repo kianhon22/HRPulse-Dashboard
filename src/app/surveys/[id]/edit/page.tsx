@@ -17,6 +17,7 @@ import { format } from "date-fns"
 import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { validateQuestionText, validateSurveyTitle } from "@/lib/utils"
 
 interface Question {
   id: string
@@ -208,17 +209,10 @@ export default function EditSurveyPage() {
     }))
   }
   
-  const handleStatusChange = (value: string) => {
-    setSurvey(prev => ({
-      ...prev,
-      status: value as Survey['status']
-    }))
-  }
-  
-  // const handleTypeChange = (value: "Text" | "Rating") => {
+  // const handleStatusChange = (value: string) => {
   //   setSurvey(prev => ({
   //     ...prev,
-  //     type: value
+  //     status: value as Survey['status']
   //   }))
   // }
   
@@ -269,7 +263,7 @@ export default function EditSurveyPage() {
   }
   
   const validateForm = () => {
-    if (!survey.title.trim()) {
+    if (!validateSurveyTitle(survey.title)) {
       showToast.error("Survey title is required")
       return false
     }
@@ -283,7 +277,12 @@ export default function EditSurveyPage() {
       const q = questions[i]
       
       if (!q.question_text.trim()) {
-        showToast.error(`Question ${i + 1} text is required`)
+        showToast.error(`Question ${i + 1} cannot be blank`)
+        return false
+      }
+      
+      if (!validateQuestionText(q.question_text)) {
+        showToast.error(`Question ${i + 1} must contain alphabetic characters and cannot be only numbers`)
         return false
       }
     }
@@ -414,8 +413,20 @@ export default function EditSurveyPage() {
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Survey Details</CardTitle>
+          <CardHeader className="-mt-2">
+            <div className="flex justify-between items-center">
+              <CardTitle>Survey Details</CardTitle>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                survey.status === 'Active' ? 'bg-green-100 text-green-800' :
+                survey.status === 'Closed' ? 'bg-red-100 text-red-800' :
+                survey.status === 'Draft' ? 'bg-gray-200 text-gray-800' :
+                survey.status === 'Scheduled' ? 'bg-yellow-100 text-yellow-800' :
+                survey.status === 'Deleted' ? 'bg-black text-white' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {survey.status}
+              </span>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -442,24 +453,8 @@ export default function EditSurveyPage() {
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">              
               {/* <div className="space-y-2">
-                <Label htmlFor="type">Survey Type</Label>
-                <Select
-                  value={survey.type}
-                  onValueChange={handleTypeChange}
-                >
-                  <SelectTrigger id="type">
-                    <SelectValue placeholder="Select survey type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Text">Text</SelectItem>
-                    <SelectItem value="Rating">Rating (1-5)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div> */}
-              
-              <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={survey.status}
@@ -476,7 +471,7 @@ export default function EditSurveyPage() {
                     <SelectItem value="Deleted">Deleted</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
               
               <div className="space-y-2">
                 <Label>Start Date</Label>

@@ -228,7 +228,7 @@ export default function RedemptionsPage() {
             <User className="h-4 w-4 text-muted-foreground" />
             <div>
               <div>{redemption.user_name}</div>
-              <div className="text-xs text-muted-foreground">{redemption.user_email}</div>
+              {/* <div className="text-xs text-muted-foreground">{redemption.user_email}</div> */}
             </div>
           </div>
         )
@@ -282,26 +282,26 @@ export default function RedemptionsPage() {
         )
       }
     },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const redemption = row.original
-        return (
-          <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                viewRedemption(redemption)
-              }}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          </div>
-        )
-      }
-    }
+    // {
+    //   id: "actions",
+    //   cell: ({ row }) => {
+    //     const redemption = row.original
+    //     return (
+    //       <div className="flex gap-2">
+    //         <Button 
+    //           variant="ghost" 
+    //           size="icon"
+    //           onClick={(e) => {
+    //             e.stopPropagation();
+    //             viewRedemption(redemption)
+    //           }}
+    //         >
+    //           <Eye className="h-4 w-4" />
+    //         </Button>
+    //       </div>
+    //     )
+    //   }
+    // }
   ]
 
   const filterableColumns = [
@@ -340,7 +340,7 @@ export default function RedemptionsPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">All Redemptions</p>
+                <p className="text-sm font-medium">Redemption Records</p>
                 <p className="text-2xl font-bold">{redemptions.length}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -450,7 +450,7 @@ export default function RedemptionsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Requested by</h3>
                   <p className="font-medium mt-1">{selectedRedemption.user_name}</p>
-                  <p className="text-sm text-gray-500">{selectedRedemption.user_email}</p>
+                  {/* <p className="text-sm text-gray-500">{selectedRedemption.user_email}</p> */}
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Request Date</h3>
