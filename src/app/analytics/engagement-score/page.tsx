@@ -58,7 +58,7 @@ Data Summary:
 - Department Filter: ${data.department}
 - Survey Filter: ${data.survey}
 - Total Surveys: ${data.totalSurveys}
-- Total Responses: ${data.totalResponses}
+- Unique Responders/Total Employees: ${data.uniqueResponders}/${data.totalEmployees}
 
 Department Breakdown:
 ${data.departmentData?.map((dept: any) => 
@@ -112,8 +112,8 @@ const exportToCSV = (data: any, filters: any) => {
   
   // Add overall statistics first
   csvData.push(['Overall Statistics']);
-  csvData.push(['Overall Score (%)', 'Total Surveys', 'Total Responses']);
-  csvData.push([data.overallData.score, data.overallData.surveys, data.overallData.responses]);
+  csvData.push(['Overall Score (%)', 'Total Surveys', 'Unique Responders/Total Employees']);
+  csvData.push([data.overallData.score, data.overallData.surveys, `${data.overallData.uniqueResponders}/${data.overallData.totalEmployees}`]);
   csvData.push([]);
   
   // Add headers
@@ -139,7 +139,7 @@ const exportToCSV = (data: any, filters: any) => {
       !['department', 'overall', 'responsesEmployees'].includes(key)
     );
     
-    csvData.push(['Department', 'Overall Score (%)', 'Responses/Total Employees', ...categoryColumns.map(cat => `${cat} (%)`)]);
+    csvData.push(['Department', 'Overall Score (%)', 'Responders/Total Employees', ...categoryColumns.map(cat => `${cat} (%)`)]);
     data.tableData.forEach((row: any) => {
       csvData.push([
         row.department, 
@@ -171,7 +171,7 @@ export default function EngagementScoreAnalytics() {
   const [surveys, setSurveys] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
-  const [overallData, setOverallData] = useState<{ score: number, surveys: number, responses: number }>({ score: 0, surveys: 0, responses: 0 });
+  const [overallData, setOverallData] = useState<{ score: number, surveys: number, uniqueResponders: number, totalEmployees: number }>({ score: 0, surveys: 0, uniqueResponders: 0, totalEmployees: 0 });
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -456,13 +456,44 @@ export default function EngagementScoreAnalytics() {
         }
         setTableData(deptData);
 
+        // Calculate overall unique responders
+        const overallUniqueResponders = new Set();
+        for (const surveyItem of filteredSurveys) {
+          const { data: questions } = await supabase
+            .from('survey_questions')
+            .select('id')
+            .eq('survey_id', surveyItem.id)
+            .eq('type', 'rating');
+          
+          const ratingQuestions = questions || [];
+          
+          if (ratingQuestions.length > 0) {
+            let responseQuery = supabase
+              .from('survey_responses')
+              .select('user_id')
+              .in('question_id', ratingQuestions.map(q => q.id));
+
+            // Filter by department if needed
+            if (department !== "Department") {
+              const employeeIds = employeeList.map(e => e.id);
+              responseQuery = responseQuery.in('user_id', employeeIds);
+            }
+
+            const { data: responses } = await responseQuery;
+            const responseList = responses || [];
+            
+            responseList.forEach(r => overallUniqueResponders.add(r.user_id));
+          }
+        }
+
         // Calculate overall data
         const overallScore = totalResponses > 0 ? Number((totalScore / totalResponses).toFixed(2)) : 0;
         
         const newOverallData = {
           score: overallScore,
           surveys: filteredSurveys.length,
-          responses: totalResponses
+          uniqueResponders: overallUniqueResponders.size,
+          totalEmployees: totalEmployees
         };
         setOverallData(newOverallData);
 
@@ -476,7 +507,8 @@ export default function EngagementScoreAnalytics() {
               department,
               survey,
               totalSurveys: filteredSurveys.length,
-              totalResponses,
+              uniqueResponders: overallUniqueResponders.size,
+              totalEmployees: totalEmployees,
               departmentData: deptData,
               chartData: chartData
             });
@@ -563,8 +595,8 @@ export default function EngagementScoreAnalytics() {
                 <div className="text-sm text-gray-600">Total Surveys</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{overallData.responses}</div>
-                <div className="text-sm text-gray-600">Total Responses</div>
+                <div className="text-2xl font-bold">{overallData.uniqueResponders}/{overallData.totalEmployees}</div>
+                <div className="text-sm text-gray-600">Responders/Total Employees</div>
               </div>
             </div>
           )}
@@ -645,7 +677,7 @@ export default function EngagementScoreAnalytics() {
                     <tr>
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Overall Score</th>
-                      <th className="px-2 py-1 text-left">Responses/Total</th>
+                      <th className="px-2 py-1 text-left">Responders/Total</th>
                       {/* Dynamic category columns */}
                       {tableData.length > 0 && Object.keys(tableData[0]).filter(key => 
                         !['department', 'overall', 'responsesEmployees'].includes(key)

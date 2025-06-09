@@ -63,7 +63,7 @@ Data Summary:
 
 Department Breakdown:
 ${data.departmentData?.map((dept: { department: any; responseRate: any; respondersEmployees: any; textCompletion: any; }) => 
-  `- ${dept.department}: Response Rate ${dept.responseRate}%, Responders ${dept.respondersEmployees}, Text Questions Answered ${dept.textCompletion}%`
+  `- ${dept.department}: Response Rate ${dept.responseRate}%, Responders ${dept.respondersEmployees}`
 ).join('\n')}
 
 Survey Performance (if showing multiple surveys):
@@ -110,8 +110,8 @@ const exportToCSV = (data: any, filters: any) => {
   
   // Add overall statistics first
   csvData.push(['Overall Statistics']);
-  csvData.push(['Overall Rate (%)', 'Total Surveys', 'Text Questions Answered (%)', 'Text Answered/Possible', 'Total Employees']);
-  csvData.push([data.overallData.rate, data.overallData.surveys, data.overallData.textCompletion, `${data.overallData.textAnswered}/${data.overallData.textPossible}`, data.overallData.employees]);
+  csvData.push(['Overall Rate (%)', 'Total Surveys', 'Total Employees']);
+  csvData.push([data.overallData.rate, data.overallData.surveys, data.overallData.employees]);
   csvData.push([]);
   
   // Add chart data
@@ -134,14 +134,13 @@ const exportToCSV = (data: any, filters: any) => {
     csvData.push([]);
     csvData.push(['Department Breakdown']);
     
-    csvData.push(['Department', 'Response Rate (%)', 'Responders/Total Employees', 'Text Questions Answered (%)', 'Text Answered/Possible']);
+    csvData.push(['Department', 'Response Rate (%)', 'Responders/Total Employees']);
     data.tableData.forEach((row: any) => {
       csvData.push([
         row.department, 
         row.responseRate, 
-        row.respondersEmployees,
-        row.textCompletion,
-        `${row.textAnswered}/${row.textPossible}`
+        row.respondersEmployees
+   
       ]);
     });
   }
@@ -592,10 +591,10 @@ export default function SurveyResponseAnalytics() {
                 <div className="text-2xl font-bold">{overallData.surveys}</div>
                 <div className="text-sm text-gray-600">Total Surveys</div>
               </div>
-              <div className="text-center" title={`${overallData.textAnswered}/${overallData.textPossible}`}>
+              {/* <div className="text-center" title={`${overallData.textAnswered}/${overallData.textPossible}`}>
                 <div className="text-2xl font-bold">{overallData.textCompletion}%</div>
                 <div className="text-sm text-gray-600">Text Questions Answered</div>
-              </div>
+              </div> */}
               <div className="text-center">
                 <div className="text-2xl font-bold">{overallData.employees}</div>
                 <div className="text-sm text-gray-600">Total Employees</div>
@@ -680,7 +679,7 @@ export default function SurveyResponseAnalytics() {
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Response Rate</th>
                       <th className="px-2 py-1 text-left">Responders/Total</th>
-                      <th className="px-2 py-1 text-left">Text Questions Answered</th>
+                      {/* <th className="px-2 py-1 text-left">Text Questions Answered</th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -689,7 +688,7 @@ export default function SurveyResponseAnalytics() {
                         <td className="px-2 py-1">{row.department}</td>
                         <td className="px-2 py-1">{row.responseRate}%</td>
                         <td className="px-2 py-1">{row.respondersEmployees}</td>
-                        <td className="px-2 py-1" title={`${row.textAnswered}/${row.textPossible}`}>{row.textCompletion}%</td>
+                        {/* <td className="px-2 py-1" title={`${row.textAnswered}/${row.textPossible}`}>{row.textCompletion}%</td> */}
                       </tr>
                     ))}
                   </tbody>

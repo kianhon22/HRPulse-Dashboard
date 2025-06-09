@@ -72,7 +72,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   filterableColumns = [],
-  // defaultSort = { id: "created_at", desc: true },
+  defaultSort = { id: "created_at", desc: true },
   showYearFilter = true,
   yearOptions = getYearOptions(),
   onYearChange,
