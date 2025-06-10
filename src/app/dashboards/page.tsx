@@ -312,6 +312,7 @@ export default function AnalyticsDashboard() {
             }
             const avg = answers.length > 0 ? answers.reduce((sum, a) => sum + Number(a.response), 0) / answers.length : 0
             return {
+              title: survey.title,
               period: `${format(parseISO(survey.start_date), 'MMM d')} - ${format(parseISO(survey.end_date), 'MMM d')}`,
               score: (avg * 20).toFixed(2),
             }
@@ -328,6 +329,7 @@ export default function AnalyticsDashboard() {
               .eq('survey_id', survey.id)
             const unique = Array.from(new Set((answers || []).map(a => a.user_id)))
             return {
+              title: survey.title,
               period: `${format(parseISO(survey.start_date), 'MMM d')} - ${format(parseISO(survey.end_date), 'MMM d')}`,
               responseRate: totalEmployees > 0 ? (unique.length / totalEmployees * 100).toFixed(2) : '0.0',
               count: unique.length,
@@ -480,17 +482,15 @@ export default function AnalyticsDashboard() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={engagementChart} margin={{ top: 5, right: 10, left: 10, bottom: 60 }}>
+                <BarChart data={engagementChart} margin={{ top: 5, right: 10, left: 10, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
-                    dataKey="period"
+                    dataKey="title"
                     padding={{ left: 30, right: 30 }}
-                    angle={-25}
-                    textAnchor="end"
                     label={{
-                      value: "Period",        // x-axis label
+                      value: "Survey",        // x-axis label
                       position: "bottom",
-                      offset: 48,
+                      offset: 10,
                       style: {
                         fill: "#555"
                       }
@@ -506,9 +506,16 @@ export default function AnalyticsDashboard() {
                       }
                     }}
                   />
-                  <Tooltip contentStyle={{ padding: 5, fontSize: 14 }} formatter={(value) => [`${value}%`, 'Engagement Score']} />
-                  <Line type="linear" dataKey="score" name="Engagement Score (%)" stroke="#6A1B9A" strokeWidth={2} activeDot={{ r: 8 }} />
-                </LineChart>
+                  <Tooltip 
+                    contentStyle={{ padding: 5, fontSize: 14 }} 
+                    formatter={(value) => [`${value}%`, 'Engagement Score']}
+                    labelFormatter={(label) => {
+                      const surveyItem = engagementChart.find(d => d.title === label);
+                      return surveyItem ? `${label} (${surveyItem.period})` : label;
+                    }}
+                  />
+                  <Bar dataKey="score" name="Engagement Score (%)" fill="#6A1B9A" />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -522,17 +529,15 @@ export default function AnalyticsDashboard() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={surveyResponseChart} margin={{ top: 5, right: 10, left: 10, bottom: 60 }}>
+                <BarChart data={surveyResponseChart} margin={{ top: 5, right: 10, left: 10, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
-                    dataKey="period"                    
+                    dataKey="title"                    
                     padding={{ left: 30, right: 30 }}
-                    angle={-25}
-                    textAnchor="end"
                     label={{
-                      value: "Period",        // x-axis label
+                      value: "Survey",        // x-axis label
                       position: "bottom",
-                      offset: 48,
+                      offset: 10,
                       style: {
                         fill: "#555"
                       }
@@ -548,9 +553,16 @@ export default function AnalyticsDashboard() {
                       }
                     }}
                   />
-                  <Tooltip contentStyle={{ padding: 5, fontSize: 14 }} formatter={(value, name, { payload }) => [`${value}% (${payload.count})`, 'Response Rate']} labelFormatter={(label) => `Period: ${label}`} />
-                  <Line type="linear" dataKey="responseRate" name="Response Rate (%)" stroke="#8E24AA" strokeWidth={2} activeDot={{ r: 8 }} />
-                </LineChart>
+                  <Tooltip 
+                    contentStyle={{ padding: 5, fontSize: 14 }} 
+                    formatter={(value, name, { payload }) => [`${value}% (${payload.count})`, 'Response Rate']} 
+                    labelFormatter={(label) => {
+                      const surveyItem = surveyResponseChart.find(d => d.title === label);
+                      return surveyItem ? `${label} (${surveyItem.period})` : label;
+                    }}
+                  />
+                  <Bar dataKey="responseRate" name="Response Rate (%)" fill="#8E24AA" />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
