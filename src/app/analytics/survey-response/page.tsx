@@ -401,23 +401,35 @@ export default function SurveyResponseAnalytics() {
             const textQuestionList = textQuestions || [];
             
             if (textQuestionList.length > 0) {
-              // Get unique users from this department who submitted this survey
+              // Get ALL questions for this survey (not just text questions)
+              const { data: allQuestions } = await supabase
+                .from('survey_questions')
+                .select('id')
+                .eq('survey_id', surveyItem.id);
+              
+              const allQuestionList = allQuestions || [];
+              
+              // Get unique users from this department who submitted ANY question in this survey
               const { data: allResponses } = await supabase
                 .from('survey_responses')
                 .select('user_id')
-                .in('question_id', textQuestionList.map(q => q.id))
+                .in('question_id', allQuestionList.map(q => q.id))
                 .in('user_id', deptEmployeeIds);
               
               const uniqueSubmitters = new Set((allResponses || []).map(r => r.user_id));
               
               // Get text responses from these submitters
-              const { data: textResponses } = await supabase
+              const { data: allTextResponses } = await supabase
                 .from('survey_responses')
                 .select('response')
                 .in('question_id', textQuestionList.map(q => q.id))
                 .in('user_id', Array.from(uniqueSubmitters))
-                .not('response', 'is', null)
-                .neq('response', '');
+                .not('response', 'is', null);
+              
+              // Filter out empty responses client-side
+              const textResponses = (allTextResponses || []).filter(r => 
+                r.response && r.response.trim() !== ''
+              );
               
               deptTextQuestionsAnswered += (textResponses || []).length;
               deptTextQuestionsPossible += textQuestionList.length * uniqueSubmitters.size;
@@ -456,22 +468,33 @@ export default function SurveyResponseAnalytics() {
           const textQuestionList = textQuestions || [];
           
           if (textQuestionList.length > 0) {
-            // Get unique users who submitted this survey
+            // Get ALL questions for this survey (not just text questions)
+            const { data: allQuestions } = await supabase
+              .from('survey_questions')
+              .select('id')
+              .eq('survey_id', surveyItem.id);
+            
+            const allQuestionList = allQuestions || [];
+            
+            // Get unique users who submitted ANY question in this survey
             const { data: allResponses } = await supabase
               .from('survey_responses')
               .select('user_id')
-              .in('question_id', textQuestionList.map(q => q.id));
+              .in('question_id', allQuestionList.map(q => q.id));
             
             const uniqueSubmitters = new Set((allResponses || []).map(r => r.user_id));
             
-            // Get text responses from these submitters
-            const { data: textResponses } = await supabase
+            const { data: allTextResponses } = await supabase
               .from('survey_responses')
               .select('response')
               .in('question_id', textQuestionList.map(q => q.id))
               .in('user_id', Array.from(uniqueSubmitters))
-              .not('response', 'is', null)
-              .neq('response', '');
+              .not('response', 'is', null);
+            
+            // Filter out empty responses client-side to avoid PostgreSQL parsing issues
+            const textResponses = (allTextResponses || []).filter(r => 
+              r.response && r.response.trim() !== ''
+            );
             
             totalTextQuestionsAnswered += (textResponses || []).length;
             totalTextQuestionsPossible += textQuestionList.length * uniqueSubmitters.size;
@@ -591,10 +614,10 @@ export default function SurveyResponseAnalytics() {
                 <div className="text-2xl font-bold">{overallData.surveys}</div>
                 <div className="text-sm text-gray-600">Total Surveys</div>
               </div>
-              {/* <div className="text-center" title={`${overallData.textAnswered}/${overallData.textPossible}`}>
+              <div className="text-center" title={`${overallData.textAnswered}/${overallData.textPossible}`}>
                 <div className="text-2xl font-bold">{overallData.textCompletion}%</div>
-                <div className="text-sm text-gray-600">Text Questions Answered</div>
-              </div> */}
+                <div className="text-sm text-gray-600">Open-Ended Questions Answered</div>
+              </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">{overallData.employees}</div>
                 <div className="text-sm text-gray-600">Total Employees</div>
@@ -678,8 +701,8 @@ export default function SurveyResponseAnalytics() {
                     <tr>
                       <th className="px-2 py-1 text-left">Department</th>
                       <th className="px-2 py-1 text-left">Response Rate</th>
-                      <th className="px-2 py-1 text-left">Responders/Total</th>
-                      {/* <th className="px-2 py-1 text-left">Text Questions Answered</th> */}
+                      <th className="px-2 py-1 text-left">Responders/Total Employees</th>
+                      <th className="px-2 py-1 text-left">Open-Ended Questions Answered</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -688,7 +711,7 @@ export default function SurveyResponseAnalytics() {
                         <td className="px-2 py-1">{row.department}</td>
                         <td className="px-2 py-1">{row.responseRate}%</td>
                         <td className="px-2 py-1">{row.respondersEmployees}</td>
-                        {/* <td className="px-2 py-1" title={`${row.textAnswered}/${row.textPossible}`}>{row.textCompletion}%</td> */}
+                        <td className="px-2 py-1" title={`${row.textAnswered}/${row.textPossible}`}>{row.textCompletion}%</td>
                       </tr>
                     ))}
                   </tbody>
