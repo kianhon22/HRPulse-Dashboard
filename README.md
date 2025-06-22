@@ -5,7 +5,7 @@ Visit https://hrpulse-beta.vercel.app to check out the features (get login crede
 Visit https://github.com/tkhabc/HRPulse to check out the mobile app for employees.
 
 ## Tech Stack
-- Frontend - React with Nextjs, https://ui.shadcn.com/docs
+- Frontend - React with Nextjs, Shadcn-UI
 - Backend - Supabase Services
 - Database - Supabase PostgreSQL
 - Development Tools - Visual Studio Code
