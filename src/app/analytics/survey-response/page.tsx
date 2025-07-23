@@ -453,56 +453,17 @@ export default function SurveyResponseAnalytics() {
         }
         setTableData(deptData);
 
-        // Calculate overall text question completion rate
-        let totalTextQuestionsAnswered = 0;
-        let totalTextQuestionsPossible = 0;
-        
-        for (const surveyItem of filteredSurveys) {
-          // Get text questions for this survey
-          const { data: textQuestions } = await supabase
-            .from('survey_questions')
-            .select('id')
-            .eq('survey_id', surveyItem.id)
-            .eq('type', 'text');
-          
-          const textQuestionList = textQuestions || [];
-          
-          if (textQuestionList.length > 0) {
-            // Get ALL questions for this survey (not just text questions)
-            const { data: allQuestions } = await supabase
-              .from('survey_questions')
-              .select('id')
-              .eq('survey_id', surveyItem.id);
-            
-            const allQuestionList = allQuestions || [];
-            
-            // Get unique users who submitted ANY question in this survey
-            const { data: allResponses } = await supabase
-              .from('survey_responses')
-              .select('user_id')
-              .in('question_id', allQuestionList.map(q => q.id));
-            
-            const uniqueSubmitters = new Set((allResponses || []).map(r => r.user_id));
-            
-            const { data: allTextResponses } = await supabase
-              .from('survey_responses')
-              .select('response')
-              .in('question_id', textQuestionList.map(q => q.id))
-              .in('user_id', Array.from(uniqueSubmitters))
-              .not('response', 'is', null);
-            
-            // Filter out empty responses client-side to avoid PostgreSQL parsing issues
-            const textResponses = (allTextResponses || []).filter(r => 
-              r.response && r.response.trim() !== ''
-            );
-            
-            totalTextQuestionsAnswered += (textResponses || []).length;
-            totalTextQuestionsPossible += textQuestionList.length * uniqueSubmitters.size;
-          }
-        }
-        
-        const textCompletionRate = totalTextQuestionsPossible > 0 ? 
-          Number(((totalTextQuestionsAnswered / totalTextQuestionsPossible) * 100).toFixed(2)) : 0;
+        // Calculate overall text question completion rate by aggregating department data
+        let overallTextQuestionsAnsweredFromDepartments = 0;
+        let overallTextQuestionsPossibleFromDepartments = 0;
+
+        deptData.forEach(dept => {
+          overallTextQuestionsAnsweredFromDepartments += dept.textAnswered;
+          overallTextQuestionsPossibleFromDepartments += dept.textPossible;
+        });
+
+        const textCompletionRate = overallTextQuestionsPossibleFromDepartments > 0 ?
+          Number(((overallTextQuestionsAnsweredFromDepartments / overallTextQuestionsPossibleFromDepartments) * 100).toFixed(2)) : 0;
         
         // Calculate overall data
         const overallRate = totalEmployees > 0 ? Number(((totalUniqueResponders / totalEmployees) * 100).toFixed(2)) : 0;
@@ -511,8 +472,8 @@ export default function SurveyResponseAnalytics() {
           rate: overallRate,
           surveys: filteredSurveys.length,
           textCompletion: textCompletionRate,
-          textAnswered: totalTextQuestionsAnswered,
-          textPossible: totalTextQuestionsPossible,
+          textAnswered: overallTextQuestionsAnsweredFromDepartments,
+          textPossible: overallTextQuestionsPossibleFromDepartments,
           employees: totalEmployees
         };
         setOverallData(newOverallData);
